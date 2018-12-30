@@ -1,0 +1,48 @@
+### LIST ###
+
+PART 2:
+72059 7205800 1% speed 156125 marbles/s, estimated time left 45.7 seconds
+144118 7205800 2% speed 43923 marbles/s, estimated time left 2.7 minutes
+216177 7205800 3% speed 23206 marbles/s, estimated time left 5.0 minutes
+288236 7205800 4% speed 17927 marbles/s, estimated time left 6.4 minutes
+360295 7205800 5% speed 32240 marbles/s, estimated time left 3.5 minutes
+432353 7205800 6% speed 16050 marbles/s, estimated time left 7.0 minutes
+504412 7205800 7% speed 6007 marbles/s, estimated time left 18.6 minutes
+576471 7205800 8% speed 7058 marbles/s, estimated time left 15.7 minutes
+648529 7205800 9% speed 8555 marbles/s, estimated time left 12.8 minutes
+720588 7205800 10% speed 10859 marbles/s, estimated time left 10.0 minutes
+792647 7205800 11% speed 14804 marbles/s, estimated time left 7.2 minutes
+864706 7205800 12% speed 23484 marbles/s, estimated time left 4.5 minutes
+936765 7205800 13% speed 56352 marbles/s, estimated time left 1.9 minutes
+1008824 7205800 14% speed 2659 marbles/s, estimated time left 38.8 minutes
+1080883 7205800 15% speed 2191 marbles/s, estimated time left 46.6 minutes
+1152942 7205800 16% speed 2276 marbles/s, estimated time left 44.3 minutes
+1225001 7205800 17% speed 2783 marbles/s, estimated time left 35.8 minutes
+1297060 7205800 18% speed 3042 marbles/s, estimated time left 32.4 minutes
+1369119 7205800 19% speed 3281 marbles/s, estimated time left 29.6 minutes
+1441178 7205800 20% speed 3622 marbles/s, estimated time left 26.5 minutes
+1513236 7205800 21% speed 3995 marbles/s, estimated time left 23.7 minutes
+1585295 7205800 22% speed 4456 marbles/s, estimated time left 21.0 minutes
+1657354 7205800 23% speed 5022 marbles/s, estimated time left 18.4 minutes
+1729412 7205800 24% speed 5741 marbles/s, estimated time left 15.9 minutes
+1801471 7205800 25% speed 6706 marbles/s, estimated time left 13.4 minutes
+1873530 7205800 26% speed 7999 marbles/s, estimated time left 11.1 minutes
+1945589 7205800 27% speed 10051 marbles/s, estimated time left 8.7 minutes
+2017647 7205800 28% speed 13370 marbles/s, estimated time left 6.5 minutes
+2089706 7205800 29% speed 19983 marbles/s, estimated time left 4.3 minutes
+2161765 7205800 30% speed 39556 marbles/s, estimated time left 2.1 minutes
+2233824 7205800 31% speed 1454 marbles/s, estimated time left 57.0 minutes
+2305883 7205800 32% speed 780 marbles/s, estimated time left 1.7 hours
+2377942 7205800 33% speed 769 marbles/s, estimated time left 1.7 hours
+2450001 7205800 34% speed 815 marbles/s, estimated time left 1.6 hours
+Traceback (most recent call last):
+  File "solution.py", line 123, in <module>
+    game(426, 72058*100)
+  File "solution.py", line 64, in game
+    for r in play_round(num_players):
+  File "solution.py", line 51, in play_round
+    circle.insert(insert_pos+1, marble)
+KeyboardInterrupt
+
+(base) D:\Private\adventofcode\2018\day 9>
+
