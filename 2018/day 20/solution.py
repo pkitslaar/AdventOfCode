@@ -1,3 +1,10 @@
+# Advent of code - 2018
+#
+# Day 20
+#
+# Pieter Kitslaar
+#
+
 import numpy as np
 from collections import defaultdict, deque
 import heapq

@@ -1,3 +1,10 @@
+# Advent of code - 2018
+#
+# Day 17
+#
+# Pieter Kitslaar
+#
+
 import numpy as np
 import re
 import heapq
