@@ -1,3 +1,9 @@
+# Advent of code - 2018
+# Day 24 
+#
+# Pieter Kitslaar
+#
+
 import re
 from collections import namedtuple, Counter
 

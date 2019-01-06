@@ -1,3 +1,9 @@
+# Advent of code - 2018
+# Day 23 
+#
+# Pieter Kitslaar
+#
+
 import numpy as np
 import re
 regex = re.compile('-*\d+')
