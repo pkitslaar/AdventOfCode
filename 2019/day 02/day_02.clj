@@ -14,8 +14,8 @@
                         output (get values (+ start 3))
                         ] 
                         (cond
-                            (= op_code 1) (run (assoc values output (+ a b)) (+ start 4))
-                            (= op_code 2) (run (assoc values output (* a b)) (+ start 4))
+                            (= op_code 1) (recur (assoc values output (+ a b)) (+ start 4))
+                            (= op_code 2) (recur (assoc values output (* a b)) (+ start 4))
                             :else (assert false)
                         )
                     )
