@@ -21,7 +21,8 @@
 
 ; Part 2
 (defn recursive_fuel [mass]
-  (loop [current_mass mass total 0]
+  (loop [current_mass mass 
+         total 0]
     (let [new_fuel (fuel_for_mass current_mass)]
       (if (<= new_fuel 0)
         total
