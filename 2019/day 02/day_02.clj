@@ -49,7 +49,6 @@
     (get (run (set_noun_verb data noun verb)) 0)
 )
 
-
 (println "Part 1:" (find_solution data 12 2))
 
 ; Part 2
@@ -62,8 +61,3 @@
         )
     )
 )
-
-
-
-
-
