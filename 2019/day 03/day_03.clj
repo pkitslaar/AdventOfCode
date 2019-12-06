@@ -1,7 +1,5 @@
-(require '[taoensso.tufte :as tufte :refer (defnp p profiled profile)])
-
-;; We'll request to send `profile` stats to `println`:
-(tufte/add-basic-println-handler! {})
+; Day 3 - Advent of Code 2019
+; Pieter Kitslaar
 
 (def UNIT_MOVES {
     "R" [ 1  0]
@@ -12,38 +10,32 @@
 
 (defn sum_pos
     [a b]
-    (p :sum_pos
         [(+ (first a) (first b)) (+ (second a) (second b))])
-)
 
 (defn code_to_move [code]
-    (p :code_to_move
     (let [[c & d] code]
-        (let [  move (get UNIT_MOVES (str c))
-                num_steps (Integer/parseInt (apply str d))
-            ]
-            (repeat num_steps move)
-        )
-    ))
-)
+        (let [move (get UNIT_MOVES (str c))
+              num_steps (Integer/parseInt (apply str d))
+             ]
+            (repeat num_steps move))))
 
 (code_to_move "R47")
 
-
 (defn wire_to_moves 
     [wire]
-    (p :wire_to_moves
-    (apply concat (map code_to_move (clojure.string/split wire #",")))))
+    (apply concat (map code_to_move (clojure.string/split wire #","))))
 
 (wire_to_moves "R5,D2")
 
 (defn moves_to_positions
     [moves inital_pos]
-    (p :moves_to_positions
-    (reduce (fn [pos mov]
-            (into pos [(sum_pos (last pos) mov)]))
-            [inital_pos]
-            moves)))
+    (first 
+        (reduce (fn [[pos prev_pos] mov]
+                    (let [new_pos (sum_pos prev_pos mov)]
+                        [(into pos [new_pos]) new_pos]
+                    ))
+                [[inital_pos] inital_pos]
+                moves)))
 
 (defn wire_to_positions
     [wire]
@@ -63,18 +55,15 @@
 (defn abs [v] (java.lang.Math/abs v))
 
 (defn manhattan [point]
-    (p :manhattan
-    (reduce + (map abs point)))
+    (reduce + (map abs point))
 )
 
 (defn closest_cross
     [wire1 wire2]
     (let [cross_points (first (find_cross_points wire1 wire2))
-          sorted_points (p :sort_by (sort-by manhattan cross_points))
+          sorted_points (sort-by manhattan cross_points)
          ]
-            (manhattan (first sorted_points))
-        )
-)
+            (manhattan (first sorted_points))))
 
 (closest_cross "R3,U2" "U2,R3")
 
@@ -87,8 +76,7 @@
 (first wires)
 (second wires)
 
+(def solution_part1 (closest_cross (first wires) (second wires)))
+(println "Part 1:", solution_part1)
+(assert (= 721 solution_part1))
 
-
-(profile ; Profile any `p` forms called during body execution
-    {} ; Profiling options; we'll use the defaults for now
-    (find_cross_points (first wires) (second wires)))
