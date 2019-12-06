@@ -1,3 +1,7 @@
+"""
+Day 5 puzzle - Advent of Code 2019
+Pieter Kitslaar
+"""
 POSITION_MODE, IMMEDIATE_MODE = range(2)
 
 def txt_values(txt):
