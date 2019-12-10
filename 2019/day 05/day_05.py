@@ -3,36 +3,73 @@ Day 5 puzzle - Advent of Code 2019
 Pieter Kitslaar
 """
 from pathlib import Path
-POSITION_MODE, IMMEDIATE_MODE = range(2)
+POSITION_MODE, IMMEDIATE_MODE, RELATIVE_MODE = range(3)
 
 def txt_values(txt):
     return [int(v) for v in txt.split(',')]
 
-def handle_v(t, values):
-    return t[0] if t[1] == IMMEDIATE_MODE else values[t[0]]
+
 
 def default_input_provider(input_v):
     def get_v():
         return input_v
     return get_v
 
+# Taken from: https://stackoverflow.com/a/4544699/4166
+class GrowingList(list):
+    def __grow(self, index):
+        max_index = index
+        if isinstance(index, slice):
+            max_index = index.stop - 1
+        if max_index >= len(self):
+            self.extend([0]*(max_index + 1 - len(self)))
+
+    def __setitem__(self, index, value):
+        self.__grow(index)
+        list.__setitem__(self, index, value)
+    
+    def __getitem__(self, index):
+        self.__grow(index)
+        return list.__getitem__(self, index)
+
 def run(in_values, input_v=0, 
                    noun_verb = None, assume_mode=POSITION_MODE, debug_output=False,
-                   output_cb=None, current_pos=0):
+                   output_cb=None, current_pos=0, relative_base=0):
 
     if isinstance(input_v, int):
         #print('Creating default_input_provider')
         input_v = default_input_provider(input_v)
     outputs = []
-    values = in_values[:]
+    values = GrowingList(in_values)
     if noun_verb:
         noun, verb = noun_verb
         values[1] = noun
         values[2] = verb
+
+    
     #current_pos = 0
     while True:
-        if debug_output:
-            print(input_v(), ["{0}{1}".format(v, ['','*'][i==current_pos]) for i,v in enumerate(values)])
+        def handle_v(t, output=False):
+            if output:
+                if t[1] == IMMEDIATE_MODE:
+                    return t[0]
+                elif t[1] == POSITION_MODE:
+                    return t[0]
+                elif t[1] == RELATIVE_MODE:
+                    return relative_base + t[0]
+                else:
+                    raise ValueError("Unkown position mode", t[1])
+            else:
+                if t[1] == IMMEDIATE_MODE:
+                    return t[0]
+                elif t[1] == POSITION_MODE:
+                    return values[t[0]]
+                elif t[1] == RELATIVE_MODE:
+                    return values[relative_base + t[0]]
+                else:
+                    raise ValueError("Unkown position mode", t[1])
+
+        
         op_code = values[current_pos]
         param_modes = [assume_mode]*4 # assume immediate mode for all parameters
         if op_code > 99:
@@ -40,29 +77,31 @@ def run(in_values, input_v=0,
             op_code = int(op_code_digits[-2:])
             for i, p_m in enumerate(reversed(op_code_digits[:-2])):
                 param_modes[i] = int(p_m)
+        if debug_output:
+            print(input_v(), relative_base, ["{0}{1}".format(v, ['','*'][i==current_pos]) for i,v in enumerate(values)], op_code, param_modes)
         if op_code < 99:
             if op_code == 1:
                 # addition
                 a, b, output = tuple(zip(values[current_pos+1:current_pos+4], param_modes))
                 #assert(output[1]==0)
-                values[output[0]] = handle_v(a, values) + handle_v(b,values)
+                values[handle_v(output, True)] = handle_v(a) + handle_v(b)
                 current_pos += 4
             elif op_code == 2:
                 # multiply
                 a, b, output = tuple(zip(values[current_pos+1:current_pos+4], param_modes))
                 #assert(output[1]==0)
-                values[output[0]] = handle_v(a,values) * handle_v(b,values)
+                values[handle_v(output, True)] = handle_v(a) * handle_v(b)
                 current_pos += 4
             elif op_code == 3:
                 # set from input
                 output = tuple(zip(values[current_pos+1:current_pos+2], param_modes))[0]
                 #assert(output[1]==0)
-                values[output[0]] = input_v()
+                values[handle_v(output, True)] = input_v()
                 current_pos += 2
             elif op_code == 4:
                 # set to output
                 a = tuple(zip(values[current_pos+1:current_pos+2],param_modes))[0]                
-                out_v = handle_v(a, values)
+                out_v = handle_v(a)
                 outputs.append(out_v)
                 current_pos += 2
                 if output_cb:
@@ -71,32 +110,38 @@ def run(in_values, input_v=0,
             elif op_code == 5:
                 # jump if true
                 a, b = tuple(zip(values[current_pos+1:current_pos+3],param_modes))
-                if handle_v(a, values) != 0:                
-                    current_pos = handle_v(b, values)
+                if handle_v(a) != 0:                
+                    current_pos = handle_v(b)
                 else:
                     current_pos += 3
             elif op_code == 6:
                 # jump if false
                 a, b = tuple(zip(values[current_pos+1:current_pos+3],param_modes))
-                if handle_v(a, values) == 0:                
-                    current_pos = handle_v(b, values)
+                if handle_v(a) == 0:                
+                    current_pos = handle_v(b)
                 else:
                     current_pos += 3
             elif op_code == 7:
                 # less than
                 a, b, output = tuple(zip(values[current_pos+1:current_pos+4],param_modes))
                 #assert(output[1]==0)
-                values[output[0]] = 1 if handle_v(a, values) < handle_v(b, values) else 0
+                values[handle_v(output, True)] = 1 if handle_v(a) < handle_v(b) else 0
                 current_pos += 4
             elif op_code == 8:
                 # equals
                 a, b, output = tuple(zip(values[current_pos+1:current_pos+4],param_modes))
                 #assert(output[1]==0)
-                A = handle_v(a, values)
-                B = handle_v(b, values)
-                O = output[0]
+                A = handle_v(a)
+                B = handle_v(b)
+                O = handle_v(output, True)
                 values[O] = 1 if A == B else 0
                 current_pos += 4
+            elif op_code == 9:
+                # relative base offset
+                a = tuple(zip(values[current_pos+1:current_pos+2],param_modes))[0]                
+                out_v = handle_v(a)
+                relative_base += out_v
+                current_pos += 2
             else:
                 raise ValueError(f"Invalid op_code {op_code} at position {current_pos}")
         elif op_code == 99:
