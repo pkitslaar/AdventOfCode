@@ -47,7 +47,7 @@
     [wire1 wire2]
     (let [wire1_path (wire_to_positions wire1)
           wire2_path (wire_to_positions wire2)
-          cross_points (p :set_intersect (clojure.set/intersection (set wire1_path) (set wire2_path)))]
+          cross_points (clojure.set/intersection (set wire1_path) (set wire2_path))]
             [(disj cross_points [0,0]) wire1_path wire2_path]))
 
 (find_cross_points "R3,U2" "U2,R3")
@@ -80,3 +80,34 @@
 (println "Part 1:", solution_part1)
 (assert (= 721 solution_part1))
 
+(defn position_delay 
+      [wire_path]
+      (loop [path wire_path
+            delay 0
+            pos_to_delay {}]
+            (if (empty? path)
+                pos_to_delay
+                (let [k (first path)]
+                    (if (contains? pos_to_delay k)   
+                        (recur (rest path) (+ delay 1) pos_to_delay)
+                        (recur (rest path) (+ delay 1) (assoc pos_to_delay k delay)))))))
+
+(position_delay [3, 4, 5, 6, 5, 7])
+
+(defn lowest_delay
+    [wire1 wire2]
+    (let [[cross_points w1_path w2_path] (find_cross_points wire1 wire2)
+          w1_delay (position_delay w1_path)
+          w2_delay (position_delay w2_path)
+          sort_f (fn [pos] (+ (get w1_delay pos) (get w2_delay pos)))
+          sorted_points (sort-by sort_f cross_points)
+          best_point (first sorted_points)
+          ]
+            (+ (get w1_delay best_point) (get w2_delay best_point))))
+
+(assert (= (lowest_delay "R8,U5,L5,D3" "U7,R6,D4,L4") 30))
+(assert (= (lowest_delay "R75,D30,R83,U83,L12,D49,R71,U7,L72" "U62,R66,U55,R34,D71,R55,D58,R83") 610))
+
+(def part2_sol (lowest_delay (first wires) (second wires)))
+(println "Part 2:" part2_sol)
+(assert (= part2_sol 7388))
