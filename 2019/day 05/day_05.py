@@ -34,7 +34,7 @@ class GrowingList(list):
 
 def run(in_values, input_v=0, 
                    noun_verb = None, assume_mode=POSITION_MODE, debug_output=False,
-                   output_cb=None, current_pos=0, relative_base=0):
+                   output_cb=None, current_pos=0, relative_base=0, stop_on_output=True):
 
     if isinstance(input_v, int):
         #print('Creating default_input_provider')
@@ -106,7 +106,8 @@ def run(in_values, input_v=0,
                 current_pos += 2
                 if output_cb:
                     output_cb(out_v)
-                    return current_pos, values, outputs
+                    if stop_on_output:
+                        return current_pos, values, outputs
             elif op_code == 5:
                 # jump if true
                 a, b = tuple(zip(values[current_pos+1:current_pos+3],param_modes))
