@@ -7,16 +7,12 @@ from pathlib import Path
 d5_dir = Path(__file__).parents[1] / 'day 05'
 assert(d5_dir.exists())
 sys.path.append(str(d5_dir))
-import importlib
-import day_05
-importlib.reload(day_05)
 from day_05 import run, txt_values
 
-for in_, out_ in [("1,9,10,3,2,3,11,0,99,30,40,50", "3500,9,10,70,2,3,11,0,99,30,40,50"),]:
-    assert(txt_values(out_) == run(txt_values(in_))[1])
+def test_intcode_basic():
+    for in_, out_ in [("1,9,10,3,2,3,11,0,99,30,40,50", "3500,9,10,70,2,3,11,0,99,30,40,50"),]:
+        assert(txt_values(out_) == run(txt_values(in_))[1])
 
-with open('input.txt', 'r') as f:
-    main_program = txt_values(f.read())
 
 PAINT, MOVE = range(2)
 BLACK, WHITE = range(2)
@@ -80,8 +76,7 @@ class Robot:
             self.current_pos = self.current_pos[0]+self.current_dir[0], self.current_pos[1]+self.current_dir[1]
         self.state = {PAINT: MOVE, MOVE: PAINT}[self.state]
 
-show_examples = False
-if show_examples:
+def test_examples():
     r = Robot()
     print(r);print(r.print_grid())
     assert(BLACK == r.get_v())
@@ -107,23 +102,32 @@ if show_examples:
     print(r)
     assert(6 == len(r.panel_colors))
 
-part1_robot = Robot()
-part1_output = run(main_program, input_v=part1_robot.get_v, output_cb=part1_robot, stop_on_output=False)
-part1_solution = len(part1_robot.panel_colors)
-print('Part 1:', part1_solution)
-assert(2478 == part1_solution)
-
-part2_robot = Robot()
-part2_robot.panel_colors[(0,0)] = WHITE
-part2_output = run(main_program, input_v=part2_robot.get_v, output_cb=part2_robot, stop_on_output=False)
-part2_solution = part2_robot.print_grid(width=-1, height=-1)
-print('Part 2:\n', part2_solution)
-
-assert("""\
+part2_expexted = """\
 .#..#..##..####.###..#..#..##...##..####...
 .#..#.#..#....#.#..#.#..#.#..#.#..#....#...
 .####.#......#..#..#.#..#.#....#..#...#....
 .#..#.#.....#...###..#..#.#.##.####..#.....
 .#..#.#..#.#....#.#..#..#.#..#.#..#.#....>.
-.#..#..##..####.#..#..##...###.#..#.####...""" == part2_solution)
+.#..#..##..####.#..#..##...###.#..#.####..."""
+
+
+def main():
+    with open(Path(__file__).parent / 'input.txt', 'r') as f:
+        main_program = txt_values(f.read())
+
+    part1_robot = Robot()
+    part1_output = run(main_program, input_v=part1_robot.get_v, output_cb=part1_robot, stop_on_output=False)
+    part1_solution = len(part1_robot.panel_colors)
+    print('Part 1:', part1_solution)
+    assert(2478 == part1_solution)
+
+    part2_robot = Robot()
+    part2_robot.panel_colors[(0,0)] = WHITE
+    part2_output = run(main_program, input_v=part2_robot.get_v, output_cb=part2_robot, stop_on_output=False)
+    part2_solution = part2_robot.print_grid(width=-1, height=-1)
+    print('Part 2:\n', part2_solution)
+    assert(part2_expexted == part2_solution)
+
+if __name__ == "__main__":
+    main()
 

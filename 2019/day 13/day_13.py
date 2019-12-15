@@ -7,13 +7,11 @@ from pathlib import Path
 d5_dir = Path(__file__).parents[1] / 'day 05'
 assert(d5_dir.exists())
 sys.path.append(str(d5_dir))
-import importlib
-import day_05
-importlib.reload(day_05)
 from day_05 import run, txt_values
 
-for in_, out_ in [("1,9,10,3,2,3,11,0,99,30,40,50", "3500,9,10,70,2,3,11,0,99,30,40,50"),]:
-    assert(txt_values(out_) == run(txt_values(in_))[1])
+def test_intcode_basic():
+    for in_, out_ in [("1,9,10,3,2,3,11,0,99,30,40,50", "3500,9,10,70,2,3,11,0,99,30,40,50"),]:
+        assert(txt_values(out_) == run(txt_values(in_))[1])
 
 # output states
 X, Y, TILE_ID = range(3)
@@ -72,22 +70,25 @@ class Arcade:
             print(''.join(r))
         print('Score:', self.scores[-1] if self.scores else 0)
 
-with open('input.txt','r') as f:
-    puzzle_data = txt_values(f.read())
+def main():
+    with open(Path(__file__).parent / 'input.txt', 'r') as f:
+        puzzle_data = txt_values(f.read())
 
-game = Arcade()
-run(puzzle_data[:], output_cb=game.receive_output, stop_on_output=False)
-game.print_screen()
-part1_sol = len([t for t in game.tiles.values() if t == BLOCK])
-print('Part 1:', part1_sol)
+    game = Arcade()
+    run(puzzle_data[:], output_cb=game.receive_output, stop_on_output=False)
+    game.print_screen()
+    part1_sol = len([t for t in game.tiles.values() if t == BLOCK])
+    print('Part 1:', part1_sol)
 
-# PArt 2
-part2_data = puzzle_data[:]
-part2_data[0] = 2 # insert two quarters
+    # PArt 2
+    part2_data = puzzle_data[:]
+    part2_data[0] = 2 # insert two quarters
 
-print('*'*80)
-print('PART 2')
-game = Arcade()
-run(part2_data, input_v=game.move_joystick, output_cb=game.receive_output, stop_on_output=False)
-game.print_screen()
+    print('*'*80)
+    print('PART 2')
+    game = Arcade()
+    run(part2_data, input_v=game.move_joystick, output_cb=game.receive_output, stop_on_output=False)
+    game.print_screen()
 
+if __name__ == "__main__":
+    main()

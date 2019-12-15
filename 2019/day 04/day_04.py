@@ -31,32 +31,38 @@ def check_password(v, check_length=has_doubles):
 
     return False
 
+def test_check_password():
+    assert(check_password('111111') == True)
+    assert(check_password('223450') == False)
+    assert(check_password('123789') == False)
+    assert(check_password('123788') == True)
 
-assert(check_password('111111') == True)
-assert(check_password('223450') == False)
-assert(check_password('123789') == False)
-assert(check_password('123788') == True)
+check_password_2 = lambda v: check_password(v, has_pair)
 
-puzzle_range = (246540, 787419)
+def test_check_password_2():
+    assert(check_password_2('123455') == True)
+    assert(check_password_2('111111') == False)
+    assert(check_password_2('112233') == True)
+    assert(check_password_2('111122') == True)
+    assert(check_password_2('123444') == False)
 
 def generate_passwords(lower, upper, check_func):
     for v in range(lower, upper):
         if(check_func(v)):
             yield v
 
-# Part 1
-part1_computation = len(list(generate_passwords(puzzle_range[0], puzzle_range[1], check_password)))
-print('Part 1:', part1_computation)
-assert(1063 == part1_computation)
+def main():
+    puzzle_range = (246540, 787419)
 
-# Part 2
-check_password_2 = lambda v: check_password(v, has_pair)
-assert(check_password_2('123455') == True)
-assert(check_password_2('111111') == False)
-assert(check_password_2('112233') == True)
-assert(check_password_2('111122') == True)
-assert(check_password_2('123444') == False)
+    # Part 1
+    part1_computation = len(list(generate_passwords(puzzle_range[0], puzzle_range[1], check_password)))
+    print('Part 1:', part1_computation)
+    assert(1063 == part1_computation)
 
-part2_computation = len(list(generate_passwords(puzzle_range[0], puzzle_range[1], check_password_2)))
-print('Part 2:', part2_computation)
-assert(686 == part2_computation)
+    # Part 2
+    part2_computation = len(list(generate_passwords(puzzle_range[0], puzzle_range[1], check_password_2)))
+    print('Part 2:', part2_computation)
+    assert(686 == part2_computation)
+
+if __name__ == "__main__":
+    main()

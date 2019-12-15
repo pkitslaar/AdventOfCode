@@ -40,16 +40,10 @@ def closest_cross(wire1, wire2):
     sorted_points.sort(key = manhattan)
     return manhattan(sorted_points[0])
 
-assert(closest_cross('R8,U5,L5,D3', 'U7,R6,D4,L4') == 6)    
-assert(closest_cross('R75,D30,R83,U83,L12,D49,R71,U7,L72', 'U62,R66,U55,R34,D71,R55,D58,R83') == 159)
-assert(closest_cross('R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51', 'U98,R91,D20,R16,D67,R40,U7,R15,U6,R7') == 135)
-
-# Part 1
-with open('input.txt', 'r') as f:
-    wires = f.readlines()
-print('Part 1:', closest_cross(wires[0], wires[1]))
-
-# Part 2
+def test_closest_cross():
+    assert(closest_cross('R8,U5,L5,D3', 'U7,R6,D4,L4') == 6)    
+    assert(closest_cross('R75,D30,R83,U83,L12,D49,R71,U7,L72', 'U62,R66,U55,R34,D71,R55,D58,R83') == 159)
+    assert(closest_cross('R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51', 'U98,R91,D20,R16,D67,R40,U7,R15,U6,R7') == 135)
 
 def position_delay(wire_path):
     pos_to_delay = {}
@@ -70,9 +64,16 @@ def lowest_delay(wire1, wire2):
     print(best_point, d1, d2, 'total:', d1+d2)
     return  d1+d2
 
-assert(lowest_delay('R8,U5,L5,D3', 'U7,R6,D4,L4') == 30)
-assert(lowest_delay('R75,D30,R83,U83,L12,D49,R71,U7,L72', 'U62,R66,U55,R34,D71,R55,D58,R83') == 610)
-assert(lowest_delay('R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51', 'U98,R91,D20,R16,D67,R40,U7,R15,U6,R7') == 410)
+def test_lowest_delay():
+    assert(lowest_delay('R8,U5,L5,D3', 'U7,R6,D4,L4') == 30)
+    assert(lowest_delay('R75,D30,R83,U83,L12,D49,R71,U7,L72', 'U62,R66,U55,R34,D71,R55,D58,R83') == 610)
+    assert(lowest_delay('R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51', 'U98,R91,D20,R16,D67,R40,U7,R15,U6,R7') == 410)
 
-print('Part 2:', lowest_delay(wires[0], wires[1]))
+def main():
+    # Part 1
+    with open(Path(__file__).parent / 'input.txt', 'r') as f:
+        wires = f.readlines()
+    print('Part 1:', closest_cross(wires[0], wires[1]))
+
+    print('Part 2:', lowest_delay(wires[0], wires[1]))
 

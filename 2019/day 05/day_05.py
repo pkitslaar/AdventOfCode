@@ -8,8 +8,6 @@ POSITION_MODE, IMMEDIATE_MODE, RELATIVE_MODE = range(3)
 def txt_values(txt):
     return [int(v) for v in txt.split(',')]
 
-
-
 def default_input_provider(input_v):
     def get_v():
         return input_v
@@ -150,10 +148,12 @@ def run(in_values, input_v=0,
         
     return current_pos, values, outputs
 
-if __name__ == "__main__":
+def compute_run2(code, input_v, assume_mode=POSITION_MODE, debug_output=False):
+        _, values, outputs = run(code, input_v=input_v, assume_mode=assume_mode, debug_output=debug_output)    
+        return get_valid_output(outputs)
 
-    if True:
-        for in_, out_ in [
+def test_intcode_basisc():
+    for in_, out_ in [
                     ("1,9,10,3,2,3,11,0,99,30,40,50", "3500,9,10,70,2,3,11,0,99,30,40,50"),
                     ("1,0,0,0,99", "2,0,0,0,99"),
                     ("2,3,0,3,99", "2,3,0,6,99"),
@@ -167,58 +167,43 @@ if __name__ == "__main__":
                 print(in_, out_)
                 raise
 
-    def get_valid_output(output):
-        if (all(v == 0 for v in output[:-1])):
-            return output[-1]
-        raise ValueError("Invalid output", output)
-
-    with open(Path(__file__).parent / 'input.txt', 'r') as f:
-        input_data = txt_values(f.read())
-
-    # Part 1
-    if True:
-        p1_position, p1_values, p1_output = run(input_data, input_v=1)
-        p1_result = get_valid_output(p1_output)
-        print('Part 1:', p1_result)
-        assert(13294380 == p1_result)
-
-    # Part 2
-    def compute_run2(code, input_v, assume_mode=POSITION_MODE, debug_output=False):
-        _, values, outputs = run(code, input_v=input_v, assume_mode=assume_mode, debug_output=debug_output)    
-        #print(values)
-        #print(outputs)
-        return get_valid_output(outputs)
-
+def test_equal_to_8():
     # test equal to 8
     assert(compute_run2([3,9,8,9,10,9,4,9,99,-1,8], input_v=8) == 1)
     assert(compute_run2([3,9,8,9,10,9,4,9,99,-1,8], input_v=7) == 0)
     assert(compute_run2([3,9,8,9,10,9,4,9,99,-1,8], input_v=9) == 0)
 
+def test_less_than_8():
     # test less than 8
     assert(compute_run2([3,9,7,9,10,9,4,9,99,-1,8], input_v=8) == 0)
     assert(compute_run2([3,9,7,9,10,9,4,9,99,-1,8], input_v=7) == 1)
     assert(compute_run2([3,9,7,9,10,9,4,9,99,-1,8], input_v=9) == 0)
 
+def test_equal_to_8_IMMEDIATE():
     # equal to 8 IMMEDIATE
     assert(compute_run2([3,3,1108,-1,8,3,4,3,99], input_v=8) == 1)
     assert(compute_run2([3,3,1108,-1,8,3,4,3,99], input_v=7) == 0)
     assert(compute_run2([3,3,1108,-1,8,3,4,3,99], input_v=9) == 0)
 
+def test_less_than_8_IMMEDIATE():
     # less than 8 IMMEDIATE
     assert(compute_run2([3,3,1107,-1,8,3,4,3,99], input_v=8) == 0)
     assert(compute_run2([3,3,1107,-1,8,3,4,3,99], input_v=7) == 1)
     assert(compute_run2([3,3,1107,-1,8,3,4,3,99], input_v=9) == 0)
 
+def test_jump_POSITION():
     # jump test POSITION MODE
     assert(compute_run2([3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9], input_v=0) == 0)
     assert(compute_run2([3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9], input_v=1) == 1)
     assert(compute_run2([3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9], input_v=2) == 1)
 
+def test_jump_IMMEDIATE():
     # jump test IMMEDIATE MODE
     assert(compute_run2([3,3,1105,-1,9,1101,0,0,12,4,12,99,1], input_v=0) == 0)
     assert(compute_run2([3,3,1105,-1,9,1101,0,0,12,4,12,99,1], input_v=1) == 1)
     assert(compute_run2([3,3,1105,-1,9,1101,0,0,12,4,12,99,1], input_v=2) == 1)
 
+def test_large_example():
     # large example
     large_data = [3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,
     1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,
@@ -228,6 +213,25 @@ if __name__ == "__main__":
     assert(compute_run2(large_data, input_v=8) == 1000) # equal 8
     assert(compute_run2(large_data, input_v=9) == 1001) # above 8
 
+def get_valid_output(output):
+    if (all(v == 0 for v in output[:-1])):
+        return output[-1]
+    raise ValueError("Invalid output", output)
+
+def main():
+    with open(Path(__file__).parent / 'input.txt', 'r') as f:
+        input_data = txt_values(f.read())
+
+    # Part 1
+    p1_position, p1_values, p1_output = run(input_data, input_v=1)
+    p1_result = get_valid_output(p1_output)
+    print('Part 1:', p1_result)
+    assert(13294380 == p1_result)
+
+    # Part 2
     part2_result = compute_run2(input_data, input_v=5)
     print('Part 2:', part2_result)
     assert(11460760 == part2_result)
+
+if __name__ == "__main__":
+    main()

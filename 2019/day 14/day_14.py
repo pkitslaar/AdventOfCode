@@ -107,10 +107,12 @@ ex1_txt ="""\
 7 A, 1 C => 1 D
 7 A, 1 D => 1 E
 7 A, 1 E => 1 FUEL"""
-ex1_data = parse_reactions(ex1_txt)
-ex1 = ReactionTable(*ex1_data)
-ex1_solution = ex1.solve()
-assert(ex1_solution[0] == -31)
+
+def test_ex1():
+    ex1_data = parse_reactions(ex1_txt)
+    ex1 = ReactionTable(*ex1_data)
+    ex1_solution = ex1.solve()
+    assert(ex1_solution[0] == -31)
 
 
 ex2_txt ="""\
@@ -121,10 +123,11 @@ ex2_txt ="""\
 5 B, 7 C => 1 BC
 4 C, 1 A => 1 CA
 2 AB, 3 BC, 4 CA => 1 FUEL"""
-ex2_data = parse_reactions(ex2_txt)
-ex2 = ReactionTable(*ex2_data)
-ex2_solution = ex2.solve()
-assert(ex2_solution[0] == -165)
+def test_ex2():
+    ex2_data = parse_reactions(ex2_txt)
+    ex2 = ReactionTable(*ex2_data)
+    ex2_solution = ex2.solve()
+    assert(ex2_solution[0] == -165)
 
 ex3_txt ="""\
 157 ORE => 5 NZVS
@@ -136,10 +139,11 @@ ex3_txt ="""\
 7 DCFZ, 7 PSHF => 2 XJWVT
 165 ORE => 2 GPVTF
 3 DCFZ, 7 NZVS, 5 HKGWZ, 10 PSHF => 8 KHKGT"""
-ex3_data = parse_reactions(ex3_txt)
-ex3 = ReactionTable(*ex3_data)
-ex3_solution = ex3.solve()
-assert(ex3_solution[0] == -13312)
+def test_ex3():
+    ex3_data = parse_reactions(ex3_txt)
+    ex3 = ReactionTable(*ex3_data)
+    ex3_solution = ex3.solve()
+    assert(ex3_solution[0] == -13312)
 
 ex4_txt = """\
 2 VPVL, 7 FWMGM, 2 CXFTF, 11 MNCFX => 1 STKFG
@@ -154,8 +158,9 @@ ex4_txt = """\
 1 NVRVD => 8 CXFTF
 1 VJHF, 6 MNCFX => 4 RFSQX
 176 ORE => 6 VJHF"""
-ex4_solution = ReactionTable(*parse_reactions(ex4_txt)).solve()
-assert(ex4_solution[0] == -180697)
+def test_ex4():
+    ex4_solution = ReactionTable(*parse_reactions(ex4_txt)).solve()
+    assert(ex4_solution[0] == -180697)
 
 ex5_txt = """\
 171 ORE => 8 CNZTR
@@ -175,17 +180,9 @@ ex5_txt = """\
 121 ORE => 7 VRPVC
 7 XCVML => 6 RJRHP
 5 BHXH, 4 VRPVC => 5 LTCX"""
-ex5_solution = ReactionTable(*parse_reactions(ex5_txt)).solve()
-assert(ex5_solution[0] == -2210736)
-
-with open('input.txt', 'r') as f:
-    puzzle_txt = f.read()
-
-p1_solution = ReactionTable(*parse_reactions(puzzle_txt)).solve()
-print('Part 1:', -p1_solution[0])
-
-#
-num_ore = 1000000000000
+def test_ex5():
+    ex5_solution = ReactionTable(*parse_reactions(ex5_txt)).solve()
+    assert(ex5_solution[0] == -2210736)
 
 def binarySearch(func, l, r, x): 
   
@@ -208,21 +205,34 @@ def binarySearch(func, l, r, x):
     # If we reach here, then the element was not present 
     return -1, r
 
+#
+num_ore = 1000000000000
 
+def test_binary_search_examples():
+    ex3_p2 = ReactionTable(*parse_reactions(ex3_txt))
+    ex2_p2_sol = binarySearch(lambda f: -ex3_p2.solve(f)[0], 0, num_ore, num_ore)
+    assert(82892753 == ex2_p2_sol[1])
 
-ex3_p2 = ReactionTable(*ex3_data)
-ex2_p2_sol = binarySearch(lambda f: -ex3_p2.solve(f)[0], 0, num_ore, num_ore)
-assert(82892753 == ex2_p2_sol[1])
+    ex4_p2 = ReactionTable(*parse_reactions(ex4_txt))
+    ex4_p2_sol = binarySearch(lambda f: -ex4_p2.solve(f)[0], 0, num_ore, num_ore)
+    assert(5586022 == ex4_p2_sol[1])
 
-ex4_p2 = ReactionTable(*parse_reactions(ex4_txt))
-ex4_p2_sol = binarySearch(lambda f: -ex4_p2.solve(f)[0], 0, num_ore, num_ore)
-assert(5586022 == ex4_p2_sol[1])
+    ex5_p2 = ReactionTable(*parse_reactions(ex5_txt))
+    ex5_p2_sol = binarySearch(lambda f: -ex5_p2.solve(f)[0], 0, num_ore, num_ore)
+    assert(460664 == ex5_p2_sol[1])
 
-ex5_p2 = ReactionTable(*parse_reactions(ex5_txt))
-ex5_p2_sol = binarySearch(lambda f: -ex5_p2.solve(f)[0], 0, num_ore, num_ore)
-assert(460664 == ex5_p2_sol[1])
+def main():
+    with open(Path(__file__).parent / 'input.txt', 'r') as f:
+        puzzle_txt = f.read()
 
-part2 = ReactionTable(*parse_reactions(puzzle_txt))
-part2_sol = binarySearch(lambda f: -part2.solve(f)[0], 0, num_ore, num_ore)
-print('Part 2:', part2_sol[1])
-assert(1935265 == part2_sol[1])
+    p1_solution = ReactionTable(*parse_reactions(puzzle_txt)).solve()
+    print('Part 1:', -p1_solution[0])
+
+    part2 = ReactionTable(*parse_reactions(puzzle_txt))
+    part2_sol = binarySearch(lambda f: -part2.solve(f)[0], 0, num_ore, num_ore)
+    print('Part 2:', part2_sol[1])
+    assert(1935265 == part2_sol[1])
+
+if __name__ == "__main__":
+    main()
+     

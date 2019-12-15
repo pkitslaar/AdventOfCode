@@ -50,17 +50,6 @@ def get_axis_state(moons, axis):
     else:
         return tuple([m.state() for m in moons])
 
-def find_repeats(data):
-    x_repeat = find_period(data, 0)
-    y_repeat = find_period(data, 1)
-    z_repeat = find_period(data, 2)
-    i=0
-    while True:
-        i+=1
-        steps = x_repeat*i
-        if steps % y_repeat == 0 and steps % z_repeat == 0:
-            print('Found', steps)
-            return steps
 
 def find_period(data, axis):
     moons = parse_moons(data)
@@ -80,18 +69,18 @@ def find_period(data, axis):
             return step - prev_step
             break
         previous_states[new_state] = step
-    
 
-with open('input.txt', 'r') as f:
-    puzzle_data = f.read()
-    puzzle_moons = parse_moons(puzzle_data)
-
-for i in range(1000):
-    apply_gravity(puzzle_moons)
-    apply_velocity(puzzle_moons)
-part1_sol = sum([m.total_energy() for m in puzzle_moons])
-print('Part 1:', part1_sol)
-assert(6849 == part1_sol)
+def find_repeats(data):
+    x_repeat = find_period(data, 0)
+    y_repeat = find_period(data, 1)
+    z_repeat = find_period(data, 2)
+    i=0
+    while True:
+        i+=1
+        steps = x_repeat*i
+        if steps % y_repeat == 0 and steps % z_repeat == 0:
+            print('Found', steps)
+            return steps
 
 ex1 = """\
 <x=-1, y=0, z=2>
@@ -99,19 +88,33 @@ ex1 = """\
 <x=4, y=-8, z=8>
 <x=3, y=5, z=-1>)"""
 
-
-
-print('ex1 repeats:', find_repeats(ex1))
+def test_ex1():
+    print('ex1 repeats:', find_repeats(ex1))
 
 ex2 = """\
 <x=-8, y=-10, z=0>
 <x=5, y=5, z=10>
 <x=2, y=-7, z=3>
 <x=9, y=-8, z=-3>"""
-print('ex2 repeats:', find_repeats(ex2))
+def test_ex2():
+    print('ex2 repeats:', find_repeats(ex2))
 
-import time
-time.sleep(0.1)
-part2_solution = find_repeats(puzzle_data)
-print('Part 2', part2_solution)
-assert(356658899375688 == part2_solution)
+def main():
+    from pathlib import Path
+    with open(Path(__file__).parent / 'input.txt', 'r') as f:
+        puzzle_data = f.read()
+        puzzle_moons = parse_moons(puzzle_data)
+
+    for i in range(1000):
+        apply_gravity(puzzle_moons)
+        apply_velocity(puzzle_moons)
+    part1_sol = sum([m.total_energy() for m in puzzle_moons])
+    print('Part 1:', part1_sol)
+    assert(6849 == part1_sol)
+
+    part2_solution = find_repeats(puzzle_data)
+    print('Part 2', part2_solution)
+    assert(356658899375688 == part2_solution)
+
+if __name__ == "__main__":
+    main()

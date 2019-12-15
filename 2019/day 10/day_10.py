@@ -4,6 +4,7 @@ Day 10
 
 import math
 from math import gcd
+from pathlib import Path
 
 EMPTY   = '.'
 ASTROID = '#'
@@ -26,16 +27,18 @@ def direction_to_angle(d):
     return angle
 
 TOLERANCE = 1e-6
-check(0, direction_to_angle((0,1)))
-check(0, direction_to_angle((1e-8,1)), TOLERANCE)
-check(45, math.degrees(direction_to_angle((1,1))), TOLERANCE)
-check(90, math.degrees(direction_to_angle((1,0))))
-check(135, math.degrees(direction_to_angle((1,-1))), TOLERANCE)
-check(180, math.degrees(direction_to_angle((0,-1))))
-check(225, math.degrees(direction_to_angle((-1,-1))), TOLERANCE)
-check(270, math.degrees(direction_to_angle((-1,0))))
-check(315, math.degrees(direction_to_angle((-1,1))), TOLERANCE)
-check(360, math.degrees(direction_to_angle((-1e-8,1))), TOLERANCE)
+
+def test_direction_to_angle():
+    check(0, direction_to_angle((0,1)))
+    check(0, direction_to_angle((1e-8,1)), TOLERANCE)
+    check(45, math.degrees(direction_to_angle((1,1))), TOLERANCE)
+    check(90, math.degrees(direction_to_angle((1,0))))
+    check(135, math.degrees(direction_to_angle((1,-1))), TOLERANCE)
+    check(180, math.degrees(direction_to_angle((0,-1))))
+    check(225, math.degrees(direction_to_angle((-1,-1))), TOLERANCE)
+    check(270, math.degrees(direction_to_angle((-1,0))))
+    check(315, math.degrees(direction_to_angle((-1,1))), TOLERANCE)
+    check(360, math.degrees(direction_to_angle((-1e-8,1))), TOLERANCE)
 
 class Grid:
     def __init__(self, txt):
@@ -89,6 +92,7 @@ def txt_to_grid(txt):
     shape = (x+1,y+1)
     return shape, asteroids
 
+
 ex1="""
 .#..#
 .....
@@ -97,9 +101,10 @@ ex1="""
 ...##
 """
 
-g1 = Grid(ex1)
-assert(8 == len(g1.detected_asteroids((3,4))))
-assert((3,4) == g1.best_location()[0])
+def text_ex1():
+    g1 = Grid(ex1)
+    assert(8 == len(g1.detected_asteroids((3,4))))
+    assert((3,4) == g1.best_location()[0])
 
 ex2="""
 ......#.#.
@@ -114,10 +119,11 @@ ex2="""
 .#....####
 """
 
-g2 = Grid(ex2)
-g2_best = g2.best_location()
-assert((5,8) == g2_best[0])
-assert(33 == len(g2_best[1]))
+def test_ex2():
+    g2 = Grid(ex2)
+    g2_best = g2.best_location()
+    assert((5,8) == g2_best[0])
+    assert(33 == len(g2_best[1]))
 
 ex3 = """
 #.#...#.#.
@@ -131,10 +137,12 @@ ex3 = """
 ......#...
 .####.###.
 """
-g3 = Grid(ex3)
-g3_best = g3.best_location()
-assert((1,2) == g3_best[0])
-assert(35 == len(g3_best[1]))
+
+def test_ex3():
+    g3 = Grid(ex3)
+    g3_best = g3.best_location()
+    assert((1,2) == g3_best[0])
+    assert(35 == len(g3_best[1]))
 
 ex4="""
 .#..#..###
@@ -149,10 +157,11 @@ ex4="""
 .....#.#..
 """
 
-g4 = Grid(ex4)
-g4_best = g4.best_location()
-assert((6,3) == g4_best[0])
-assert(41 == len(g4_best[1]))
+def test_ex4():
+    g4 = Grid(ex4)
+    g4_best = g4.best_location()
+    assert((6,3) == g4_best[0])
+    assert(41 == len(g4_best[1]))
 
 ex5="""
 .#..##.###...#######
@@ -177,35 +186,38 @@ ex5="""
 ###.##.####.##.#..##
 """
 
-g5 = Grid(ex5)
-g5_best = g5.best_location()
-assert((11,13) == g5_best[0])
-assert(210 == len(g5_best[1]))
+def test_ex5():
+    g5 = Grid(ex5)
+    g5_best = g5.best_location()
+    assert((11,13) == g5_best[0])
+    assert(210 == len(g5_best[1]))
 
-# Part 1
-with open("input.txt", 'r') as f:
-    main_grid = Grid(f.read())
-part1_solution = main_grid.best_location()
-print('Part 1:', part1_solution[0], len(part1_solution[1]))
+def test_vaporize():
+    g5 = Grid(ex5)
+    g5_test_asteroids = g5.vaporize((11,13))
+    check(g5_test_asteroids[0], (11,12))
+    check(g5_test_asteroids[1], (12,1))
+    check(g5_test_asteroids[2], (12,2))
+    check(g5_test_asteroids[9], (12,8))
+    check(g5_test_asteroids[19], (16,0))
+    check(g5_test_asteroids[49], (16,9))
+    check(g5_test_asteroids[99], (10,16))
+    check(g5_test_asteroids[198], (9,6))
+    check(g5_test_asteroids[199], (8,2))
+    check(g5_test_asteroids[200], (10,9))
+    check(g5_test_asteroids[298], (11,1))
+
+def main():
+    # Part 1
+    with open(Path(__file__).parent / 'input.txt', 'r') as f:
+        main_grid = Grid(f.read())
+    part1_solution = main_grid.best_location()
+    print('Part 1:', part1_solution[0], len(part1_solution[1]))
+
+    part2_vaporize = main_grid.vaporize((23,20))
+    part2_solution = part2_vaporize[199]
+    print('Part 2:', part2_solution, 100*part2_solution[0]+part2_solution[1])
 
 
-# Part 2
-g5_test_asteroids = g5.vaporize((11,13))
-check(g5_test_asteroids[0], (11,12))
-check(g5_test_asteroids[1], (12,1))
-check(g5_test_asteroids[2], (12,2))
-check(g5_test_asteroids[9], (12,8))
-check(g5_test_asteroids[19], (16,0))
-check(g5_test_asteroids[49], (16,9))
-check(g5_test_asteroids[99], (10,16))
-check(g5_test_asteroids[198], (9,6))
-check(g5_test_asteroids[199], (8,2))
-check(g5_test_asteroids[200], (10,9))
-check(g5_test_asteroids[298], (11,1))
-
-
-part2_vaporize = main_grid.vaporize((23,20))
-part2_solution = part2_vaporize[199]
-print('Part 2:', part2_solution, 100*part2_solution[0]+part2_solution[1])
-
-
+if __name__ == "__main__":
+    main()
