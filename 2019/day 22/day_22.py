@@ -84,63 +84,96 @@ def deal_increment(N, increment, x):
     [0, 5,10, 4, 9, 3, 8, 2, 7, 1, 6] N=11, increment=9
     [0,10, 9, 8, 7, 6, 5, 4, 3, 2, 1] N=11, increment=11
     """
-    #bf = deal_increment_brute(N, increment, x)
-    ff = deal_increment_fast(N, increment, x)
-    #if(bf != ff):
-    #    raise ValueError(f"For {N=} {increment=} {x=} {bf} != {ff}")
-    return ff
+    ab = deal_increment_ab(N, increment)
+    new_position = apply_f(ab, x, N)
+    return new_position
+
+def deal_using_f(f, deck):
+    new_positions = list(map(f, range(len(deck))))
+    new_deck = [0]*len(deck)
+    for i, p in enumerate(new_positions):
+        new_deck[p] = deck[i]
+    return new_deck
 
 def test_deal_inc_11_3():
     deal_inc_11_3 = partial(deal_increment, 11, 3)
-    d2 = map(deal_inc_11_3, range(11))
+    d2 = deal_using_f(deal_inc_11_3, range(11))
     assert(list(d2) == [0, 4, 8, 1, 5, 9, 2, 6,10, 3, 7])
 
 def test_deal_inc_10_1():
     deal_inc_10_1 = partial(deal_increment, 10, 1)
-    d2 = map(deal_inc_10_1, range(10))
+    d2 = deal_using_f(deal_inc_10_1, range(10))
     assert(list(d2) == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+
+def test_deal_inc_11_2():
+    deal_inc_11_2 = partial(deal_increment, 11, 2)
+    d2 = deal_using_f(deal_inc_11_2, range(11))
+    assert(list(d2) == [0, 6, 1, 7, 2, 8, 3, 9, 4,10, 5])
 
 def test_deal_inc_10_3():
     deal_inc_10_3 = partial(deal_increment, 10, 3)
-    d2 = map(deal_inc_10_3, range(10))
+    d2 = deal_using_f(deal_inc_10_3, range(10))
     assert(list(d2) == [0, 7, 4, 1, 8, 5, 2, 9, 6, 3])
 
 def test_deal_inc_10_7():
     deal_inc_10_7 = partial(deal_increment, 10, 7)
-    d2 = map(deal_inc_10_7, range(10))
+    d2 = deal_using_f(deal_inc_10_7, range(10))
     assert(list(d2) == [0, 3, 6, 9, 2, 5, 8, 1, 4, 7])
 
 def test_deal_inc_10_cards_9():
     deal_inc_10_9 = partial(deal_increment, 10, 9)
     #in_ = [8, 9, 0, 1, 2, 3, 4, 5, 6, 7]
     #out_= [8, 7, 6, 5, 4, 3, 2, 1,  0, 9]
-    d2 = map(deal_inc_10_9, range(10))
+    d2 = deal_using_f(deal_inc_10_9, range(10))
     assert(list(d2) == [0, 9, 8, 7, 6, 5, 4, 3, 2, 1])
 
 def parse_funcs(txt, N):
-    funcs = []
+    funcs_ab = []
     for l in txt.splitlines():
         if l.startswith('deal with increment'):
             num = int(l.rsplit(' ',1)[-1])
-            funcs.append(partial(deal_increment, N, num))
+            funcs_ab.append(deal_increment_ab (N, num))
         elif l.startswith('cut'):
             num = int(l.rsplit(' ',1)[-1])
-            funcs.append(partial(cut_N_cards, N, num))
+            funcs_ab.append(cut_N_cards_ab(N, num))
         elif l.startswith('deal into new stack'):
-            funcs.append(partial(deal_into_new_stack, N))
+            funcs_ab.append(deal_into_new_stack_ab(N))
         else:
             raise ValueError('Unknown deal method', l)
-    return reversed(funcs)
+    return funcs_ab
 
-def solve(txt, num_cards=10):
-    funcs = parse_funcs(txt, num_cards)
-    return list(solve2(funcs, range(num_cards)))
+def solve_explicit(txt, num_cards=10):
+    funcs_ab = parse_funcs(txt, num_cards)
+    #funcs = [lambda x: apply_f(x=x, ab=f_ab, N=num_cards) for f_ab in funcs_ab]
+    return list(solve2_explicit(funcs_ab, num_cards, range(num_cards)))
 
-def solve2(funcs, x_seq):
-    for f in funcs:
-        new_x_seq = map(f, x_seq)
-        x_seq = new_x_seq
+def solve2_explicit(funcs, N, x_seq):
+    for f_ab in funcs:
+        def f(x):
+            return apply_f(f_ab, x, N)
+        new_x_seq = deal_using_f(f, x_seq)
+        x_seq = new_x_seq[:]
     return x_seq
+
+def compose(ab, cd, num_cards):
+    a,b,c,d = ab['a'], ab['b'], cd['a'], cd['b']
+    return {
+        'a': (a*c) % num_cards,
+        'b': (b*c+d) % num_cards
+    }
+
+def solve_analytic_ab(txt, num_cards=10):
+    funcs_ab = parse_funcs(txt, num_cards)
+    ab = funcs_ab[0]
+    for cd in funcs_ab[1:]:
+        ab = compose(ab, cd, num_cards)
+    return ab
+
+def solve_analytic(txt, num_cards=10):
+    ab = solve_analytic_ab(txt, num_cards)
+    return solve2_explicit([ab], num_cards, range(num_cards))
+
 
 example1 = """\
 deal with increment 7
