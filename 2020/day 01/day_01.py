@@ -32,17 +32,17 @@ def get_input():
             input_numbers.append(int(l.strip()))
     return input_numbers
 
-def part1():
+def test_part1():
     answer = solve(get_input(),2)
     assert(713184 == answer)
     print('Part 1:', answer) 
 
-def part2():
+def test_part2():
     answer = solve(get_input(),3)
-    #assert(713184 == answer)
+    assert(261244452 == answer)
     print('Part 2:', answer) 
 
 if __name__ == "__main__":
     test_example()
-    part1()
-    part2()
+    test_part1()
+    test_part2()
