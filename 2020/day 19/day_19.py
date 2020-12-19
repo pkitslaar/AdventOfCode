@@ -1,5 +1,11 @@
+"""
+Advent of Code 2020 - Day 19
+Pieter Kitslaar
+"""
+
 from pathlib import Path
 import re
+import itertools
 
 example_rules_a='''\
 0: 1 2
@@ -170,8 +176,6 @@ aaaabbaabbaaaaaaabbbabbbaaabbaabaaa
 babaaabbbaaabaababbaabababaaab
 aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba"""
 
-RE_CLEANUP = re.compile('\(([a-z])\)')
-import itertools
 
 def expand_rules2(rule_dict):
     found_subst = True
@@ -218,38 +222,6 @@ def expand_rules2(rule_dict):
         rule_dict = new_rules
     return rule_dict
 
-def check_matches(pattern, offset, max_offset, N, rule):
-    print(pattern)
-    matches = True
-    while matches and offset < max_offset:
-        matches = False
-        chunk = pattern[offset:offset+N]
-        if chunk in rule:
-            print(chunk)
-            matches = True
-            offset+=N
-    return matches, offset
-
-
-def check_part2(pattern, rules, N):
-    num_chunks = len(pattern) // N
-    if check_matches(pattern, 0, len(pattern), N, rules[42]):
-            print('FULL match', pattern)
-            return True
-    else:
-        half_start =  len(pattern)//2
-        half_start -= half_start % N
-        print(half_start, len(pattern))
-        if check_matches(pattern, 0, half_start, N, rules[42]):
-            # check second half also with rule42
-            if check_matches(pattern, half_start, len(pattern), N, rules[42]):
-                print('2nd 42', pattern)
-                return True
-            elif check_matches(pattern, half_start, len(pattern), N, rules[31]):
-                print('2nd 31', pattern)
-                return True
-
-
 def solve2(txt):
     initial_rules, patterns_txt = parse_full(txt)
     rules = expand_rules2(initial_rules)#, create_regexp=False)
@@ -257,11 +229,10 @@ def solve2(txt):
 
     max_pattern_length = max(len(p) for p in patterns_txt)
     max_repeat = 1+ max_pattern_length // (N*2)
-    #print(N)
+    
     rule_31 = "|".join(rules[31])
     rule_42 = "|".join(rules[42])
-    #print(42, rule_42)
-    #print(31, rule_31)
+    
     """
     0: 8 11 -> 0: 42+ 42{i}31{i}
     8: 42 | 42 8 -> 8: 42+ e.g repeat 42 1-to-N
@@ -273,12 +244,11 @@ def solve2(txt):
     p31_end = re.compile(r'(%s)+$' % rule_31)
     p42_repeat = re.compile(r'^(%s)+$' % rule_42)
     regexps = [re.compile(r'^(%s){%s,}(%s){%s}$' % (rule_42, i+1, rule_31, i)) for i in range(1,max_repeat)]
+
     all_matches = []
-    #print(len(patterns_txt))
     for pattern in patterns_txt:
         for regex in regexps:
             if m:=regex.match(pattern):
-                #print(m)
                 all_matches.append(pattern)
                 break
     return all_matches
