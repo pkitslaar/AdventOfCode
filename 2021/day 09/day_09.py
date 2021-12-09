@@ -41,8 +41,8 @@ def low_points(heightmap):
 
 def solve1(txt):
     risk = 0
-    for low_p, _ in low_points(parse(txt)):
-        risk += low_p + 1
+    for low_p_heigth, _ in low_points(parse(txt)):
+        risk += low_p_heigth + 1
     return risk
 
 def test_example():
