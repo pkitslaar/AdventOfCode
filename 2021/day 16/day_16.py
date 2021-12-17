@@ -1,12 +1,10 @@
 """
-Advent of Code 2021 - Day 15
+Advent of Code 2021 - Day 16
 Pieter Kitslaar
 """
 
 import operator
 from pathlib import Path
-import networkx
-
 
 def get_input():
     with open(Path(__file__).parent / 'input.txt', 'r') as f:
