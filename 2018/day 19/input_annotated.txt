@@ -1,10 +1,17 @@
 #ip 3
 addi 3 16 3  #  0: jump => ip=17
 
+####
+# MAIN LOOP
+####
 seti 1 9 5   #  1: r[5] = 1
 
+## Outer loop
 seti 1 1 4   #  2: r[4] = 1
 
+## Inner loop
+
+# Check if product of r[4] and r[5] is equal to r[1]
 mulr 5 4 2   #  3: r[2] = r[4]*r[5]
 eqrr 2 1 2   #  4: r[2] = r[2] == r[1]
 addr 2 3 3   #  5: r[3] = r[2] + 5
@@ -12,22 +19,33 @@ addr 2 3 3   #  5: r[3] = r[2] + 5
              #      jump => ip 7
              #   else:
 addi 3 1 3   #  6:  jump => ip 8
+
+# if equal add r[5] to r[0]
 addr 5 0 0   #  7: r[0] = r[0] + r[5]
+
+# increment r[4]
 addi 4 1 4   #  8: r[4] = r[4] + 1
 
+# while r[4] <= r[1] continue "Inner loop"
 gtrr 4 1 2   #  9: r[2] = r[4] > r[1]
 addr 3 2 3   # 10: r[3] = r[3] + r[2]
              #  if r[4] > r[1]: 
              #    jump => ip 12
              #  else:
 seti 2 3 3   # 11: jump => ip = 3
+
+# r[4] > r[1]
+# Now icrement r[5]
 addi 5 1 5   # 12: r[5] = r[5] + 1
 gtrr 5 1 2   # 13: r[2] = r[5] > r[1]
+
+# while r[5] <= r[1] continue to "Outer loop"
 addr 2 3 3   # 14: r[3] = r[3] + r[2]
              #  if r[5] > r[1]:
              #    jump => ip 16
              #  else:
 seti 1 4 3   # 15: jump => ip = 2
+# r[5] > r[1] HALT
 mulr 3 3 3   # 16: jump => ip = 16*16 => HALT
 
 ###
