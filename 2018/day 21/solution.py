@@ -98,7 +98,6 @@ def execute_program(txt_data, initial_data = [0]*6, cb = None):
     cpu = CPU()
     cpu.setup(initial_data)
     num_instructions = 0
-    print(ip_adress)
     while True:
         if ip >= len(instructions):
             break
@@ -115,7 +114,17 @@ def execute_program(txt_data, initial_data = [0]*6, cb = None):
     return cpu.dump(), num_instructions
 
 def fast_execute(initial_data = [0]*6):
+    """
+    Implementation of the program as interpreted
+    from the annotated input.
+
+    The big speed-up is taken from direct computation
+    of r[5] = r[5] // 256 which in the original code
+    is done though a long loop.
+    """
     r = initial_data[:]
+
+    previous_r3 = []
 
     # ip=5
     r[3] = 0
@@ -136,47 +145,61 @@ def fast_execute(initial_data = [0]*6):
             r[3] = r[3] & 16777215
 
             if r[5] >= 256:
-                # ip-17
-                r[2] = 0
+                if True: # fast
+                    r[5] = r[5] // 256
+                else:
+                    # ip-17
+                    r[2] = 0
 
-                # update r[4]
-                while True:
-                    r[4] = r[2] + 1
-                    r[4] = r[4]*256
+                    # update r[4]
+                    while True:
+                        r[4] = r[2] + 1
+                        r[4] = r[4]*256
 
-                    if r[4] > r[5]:
-                        break
-                    else:
-                        r[2] = r[2] + 1
-                
-                # r[4] > r[5]
-                r[5] = r[2] # jump back to ip=8
+                        if r[4] > r[5]:
+                            break
+                        else:
+                            r[2] = r[2] + 1
+                    
+                    # r[4] > r[5]
+                    # ip=26
+                    r[5] = r[2] # jump back to ip=8
             else:    
-                # ip=26
+                if r[3] in previous_r3:
+                    return previous_r3[-1] # last r3
+                else:
+                    previous_r3.append(r[3])
                 if r[3] == r[0]:
                     return r # halt
+                else:
+                    break # jump back to ip=6
 
 
 def test_part1():
     with open(THIS_DIR / 'input.txt') as f:
         data = f.read()
 
+    result = 0
+    def first_r3_check(ip, cpu):
+        nonlocal result
+        if ip == 28:
+            result = cpu.registers[3]
+            # set r[0] to force halt
+            cpu.registers[0] = result
+
     # PART 1
-    print(execute_program(data, [13270004,0,0,0,0,0]))
-    fast_execute([13270004,0,0,0,0,0])
+    execute_program(data, cb=first_r3_check) 
+    print('PART 1:', result)
+    assert(result == 13270004)
 
 def test_part2():
     with open(THIS_DIR / 'input.txt') as f:
         data = f.read()
-
-    # PART 2
-    r3_values = []
-    def check_ip_28(ip, cpu):
-        if ip == 8 or ip==9:
-            print(ip, cpu.dump())
-    print(execute_program(data, [13181393], cb = check_ip_28))
+    result = fast_execute([0,0,0,0,0,0])
+    print('PART 2:', result)
+    assert(result == 12879142)
 
 if __name__ == "__main__":
     test_part1()
-    #test_part2()
+    test_part2()
 
