@@ -1,3 +1,8 @@
+"""
+Advent of Code 2017 - Day 01
+Pieter Kitslaar
+"""
+
 from pathlib import Path
 THIS_DIR = Path(__file__).parent
 
