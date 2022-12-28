@@ -68,13 +68,16 @@ class Option:
 
     def sort_key(self):
         return (
-            self.t,
+
             -self.resources['geode'],
-            -(self.robots['clay'] > 0),
+            #-self.robots['geode'],
             -(self.robots['obsidian'] > 0),
-            -(self.robots['geode'] > 0),
-            #-len(self.robots),
-            -self.robots['geode'],
+            -(self.robots['clay'] > 0),
+                                                    
+            -len(self.robots),
+            self.resources['ore'],
+                        #self.t,
+
         )
 
     def __lt__(self, other):
@@ -89,7 +92,7 @@ class Option:
             return True, test_resources
         return False, resources
 
-    def max_geodes(self, END_T = 24):
+    def max_geodes(self, END_T):
         """The maximum number of geodes to obtain assuming you are able to build a new geode robot eveyr minute"""
         max_geode = self.resources['geode']
         nr_geode = self.robots['geode']
@@ -99,7 +102,7 @@ class Option:
         return max_geode
 
     
-    def next_options(self, END_T = 24):
+    def next_options(self, END_T):
         # assume we do nothing until end
         t_remaining = END_T - self.t
         if t_remaining > 0:
@@ -130,7 +133,7 @@ class Option:
             if can_build:
                 max_needed_time = max(needed_times)
                 new_t = self.t + max_needed_time+1
-                if new_t <= 24:
+                if new_t <= END_T:
                     new_resources = self.resources.copy()
                     for r,n in self.robots.items():
                         new_resources[r] += (n*max_needed_time)
@@ -153,41 +156,42 @@ class Option:
             
 import heapq
 
-def solve(d):
+def solve(d, part2=False):
     blueprint = parse(d)
-    total_quality = 0
+    END_T = 24
+    if part2:
+        END_T = 32
+        blueprint = {bp_num:bp for bp_num, bp in blueprint.items() if bp_num <= 3}
+
+    result = 0 if not part2 else 1
     for bp_num, bp in blueprint.items():
         options = [Option(bp,
                     t=1,
                     robots=collections.defaultdict(int,{'ore':1}),
                     resources=collections.defaultdict(int,{'ore':1}))]
-        all_results = []
-        accepted = {}
+
         max_geode = 0
         while options:
             this_option = heapq.heappop(options)
-            if not this_option.t in accepted or this_option < accepted[this_option.t]:
-                accepted[this_option.t] = this_option
+            if True:
                 if this_option.resources['geode'] > max_geode:
                     max_geode = this_option.resources['geode']
-                print(this_option.t, len(options), max_geode)
-                #print(len(options))
-                #print(this_option)
-                #options = [opt for opt in options if opt.max_geodes() >= max_geode]
-                #heapq.heapify(options)
-                #options = []
-                #print(this_option.t, len(options))
-            if this_option.t < 24:
-                for new_option in this_option.next_options():
-                    if new_option.t not in accepted or (new_option <= accepted[new_option.t] and new_option.max_geodes() >= max_geode):
-                        heapq.heappush(options, new_option)
-            else:
-                if this_option.resources['geode'] > 0 and this_option.t == 24:
-                    print(this_option)
-                    break
+                    if this_option.t == END_T:
+                        print(this_option)
+                    # remove any options that theoretically cannot reach above max_geode
+                    options = [opt for opt in options if opt.max_geodes(END_T) >= max_geode]
+                    heapq.heapify(options)
 
-        total_quality += bp_num*this_option.resources['geode']
-    return total_quality
+            if this_option.t < END_T:
+                for new_option in this_option.next_options(END_T):
+                    if new_option.max_geodes(END_T) >= max_geode:
+                        heapq.heappush(options, new_option)
+                    
+        if not part2:
+            result += bp_num*max_geode
+        else:
+            result *= max_geode
+    return result
 
 
 
@@ -201,13 +205,20 @@ def test_part1():
     result = solve(data())
     print('PART 1:', result)
     assert(result == 1413) 
+
+def test_example2():
+    result = solve(EXAMPLE_DATA, part2=True)
+    assert(56*62 == result)
+    print('example 2 OK')
+
+def test_part2():
+    result = solve(data(), part2=True)
+    print('PART 2:', result)
+    assert(21080 == result)
+
     
 if __name__ == "__main__":
     test_example()
-    #test_part1()
-        
-
-
-
-
-
+    test_part1()
+    test_example2()
+    test_part2()
