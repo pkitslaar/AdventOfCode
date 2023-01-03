@@ -2,7 +2,6 @@
 Advent of Code 2022 - Day 21
 Pieter Kitslaar
 """
-import pygame
 from pathlib import Path
 THIS_DIR = Path(__file__).parent
 
@@ -57,82 +56,6 @@ def parse(d):
 
     return jungle, movements, start_pos
 
-class JungleRenderer:
-    def __init__(self, jungle, scale=8) -> None:
-        self.scale = scale
-        self.jungle = jungle
-        W = max(p[1] for p in self.jungle)
-        H = max(p[0] for p in self.jungle)
-
-        pygame.init()
-        pygame.font.init()
-
-        self.white = (255, 255, 255) 
-        self.green = (0, 255, 0) 
-        self.blue = (0, 0, 128) 
-        self.black = (0, 0, 0)
-
-        self.pause = False
-
-
-        self.map_surface = pygame.Surface(((W+1)*self.scale,(H+1)*self.scale))
-
-        self.win = pygame.display.set_mode((400, 400))
-
-        pygame.display.flip()
-        pygame.display.set_caption('AoC 2022 - Day 22')
-        self.font = pygame.font.SysFont("Courier", self.scale)        
-        pygame.display.flip()
-        self.camera_pos = (0,0)
-        self.map_center_pos = (0,0)
-
-    def render_jungle(self):
-        COLORS = {'#': (255,0,0), '.': (255,255,255)}
-        for (y,x), v in self.jungle.items():
-            self.draw_at_pos((y,x),v, COLORS[v], update=False)
-
-    def render(self):
-        corner = (-self.map_center_pos[0]*self.scale, -self.map_center_pos[1]*self.scale)
-        self.win.fill((0,0,0))
-        self.win.blit(self.map_surface, corner)
-        pygame.display.update()
-
-    def draw_at_pos(self, pos, char, color=None, update=True):
-        text = self.font.render(char, True, color or self.white, self.black)
-        self.map_surface.blit(text, (pos[1]*self.scale,pos[0]*self.scale))
-        if update:
-            self.render()
-
-    def center_at_pos(self, pos):
-        self.map_center_pos = pos
-        self.render()
-
-    def handle_input(self):
-        max_loop = 10
-        loop = 0
-        while True:
-            if not self.pause and loop >= max_loop:
-                break
-            pygame.time.delay(100)
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE:
-                        self.pause = not self.pause
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    return
-            pressed_keys = pygame.key.get_pressed()                
-            if pressed_keys[pygame.K_LEFT]:
-                self.center_at_pos((self.map_center_pos[0]-1, self.map_center_pos[1]))
-            elif pressed_keys[pygame.K_RIGHT]:
-                self.center_at_pos((self.map_center_pos[0]+1, self.map_center_pos[1]))
-            elif pressed_keys[pygame.K_UP]:
-                self.center_at_pos((self.map_center_pos[0], self.map_center_pos[1]-1))
-            elif pressed_keys[pygame.K_DOWN]:
-                self.center_at_pos((self.map_center_pos[0], self.map_center_pos[1]+1))
-
-            loop += 1
-
 DIRS={
     '>': (0,1),
     '<': (0,-1),
@@ -168,7 +91,7 @@ def new_pos_2D(jungle, W, H, new_pos, facing):
 
 
 def new_pos_3D(jungle, W, H, pos, facing, example=True):
-    face_size = W//4
+    face_size = max([W//4,H//4])
     D = DIRS[facing]
     new_pos = (pos[0]+D[0], pos[1]+D[1])
     if jungle.get(new_pos):
@@ -187,18 +110,20 @@ def new_pos_3D(jungle, W, H, pos, facing, example=True):
                                     (3,3): 5,   (4,3): 6  
             }[(face_X, face_Y)]
             """
-                    1111
-                    1111
-                    1111
-                    1111
-            222233334444
-            222233334444
-            222233334444
-            222233334444
-                    55556666
-                    55556666
-                    55556666
-                    55556666
+              1  fs 2fs 3fs  4fs = W
+              |  |   |   |   |
+        1   -         1111
+                      1111
+                      1111
+        fs  -         1111
+              222233334444
+              222233334444
+              222233334444
+        2fs - 222233334444
+                      55556666
+                      55556666
+                      55556666
+     H =3fs -         55556666
             """
             result = {   
                 #  1 < maps to top side of 3 v
@@ -230,22 +155,24 @@ def new_pos_3D(jungle, W, H, pos, facing, example=True):
             (1,4): 6  
             }[(face_X, face_Y)]
             """
-                11112222
-                11112222
-                11112222
-                11112222
-                3333
-                3333
-                3333
-                3333
-            44445555
-            44445555
-            44445555
-            44445555
-            6666
-            6666
-            6666
-            6666
+              1  fs 2fs 3fs  4fs = W
+              |  |   |   |   |
+           1-     11112222
+                  11112222
+                  11112222
+          fs-     11112222
+                  3333
+                  3333
+                  3333
+         2fs-     3333
+              44445555
+              44445555
+              44445555
+         3fs- 44445555
+              6666
+              6666
+              6666
+       H=4fs- 6666
             """
             result = {   
                 #  1 < maps to left side of 4 >
@@ -254,21 +181,41 @@ def new_pos_3D(jungle, W, H, pos, facing, example=True):
                 (1, '^'): ((3*face_size + local_X, 1), '>'),
                 
                 # 2 ^ maps to bottom side 6 ^
-                (2, '^'): ((H, local_X),''),
+                (2, '^'): ((H, local_X),'^'),
                 # 2 > maps to right side 5 <
                 (2, '>'): ((3*face_size - (local_Y-1), 2*face_size), '<'),
                 # 2 v maps to right side 3 <
                 (2, 'v'): ((face_size + local_X, 2*face_size), '<'),
 
                 # 3 < maps to top side 4 v
-                (3, '<'): ((2*face_size, local_Y), 'v'),
+                (3, '<'): ((2*face_size+1, local_Y), 'v'),
                 # 3 > maps to bottom side 2 ^
-                (3, '>'): ((face_size, 2*face_size+local_Y)),
+                (3, '>'): ((face_size, 2*face_size+local_Y),'^'),
+
+                # 4 < maps to left side 1 >
+                (4, '<'): ((face_size - (local_Y-1), face_size+1), '>'),
+                # 4 ^ maps to left side 3 >
+                (4, '^'): ((face_size + local_X, face_size+1), '>'),
+                
+                # 5 > maps to right side of 2 <
+                (5, '>'): ((face_size - (local_Y-1),3*face_size), '<'),
+                # 5 v maps to right side of 6 <
+                (5, 'v'): ((3*face_size + local_X, face_size), '<'),
+
+                # 6 < maps to 1 top side v
+                (6 , '<'): ((1, face_size + local_Y), 'v'),
+                # 6 v maps to 2 top side v
+                (6, 'v'): ((1, 2*face_size + local_X), 'v'),
+                # 6 > maps to 5 bottom side ^
+                (6, '>'): ((3*face_size, face_size + local_Y), '^'),
                 
             }[(face_N,facing)]
             pass
         assert(result[0] in jungle)
         return result
+
+import functools
+new_pos_3D_part2 = functools.partial(new_pos_3D, example=False)
 
 def test_new_pos_3D():
     assert(((4,5),'v') == new_pos_3D({},16,12, (1,9),'<'))
@@ -277,13 +224,6 @@ def solve(d, new_pos_func = new_pos_2D):
     jungle, movements, start_pos = parse(d)
     W = max(p[1] for p in jungle)
     H = max(p[0] for p in jungle)
-
-    enable_renderer = False
-    if enable_renderer:
-        import pygame
-        renderer = JungleRenderer(jungle, scale=16)
-        renderer.render_jungle()
-        renderer.center_at_pos((start_pos[1], start_pos[0]))
 
     movement_map = jungle.copy()
 
@@ -300,8 +240,6 @@ def solve(d, new_pos_func = new_pos_2D):
         num_steps = m['steps']
         D = DIRS[facing]
         movement_map[pos] = facing
-        if enable_renderer:
-            renderer.draw_at_pos(pos, facing)
 
         new_pos = pos
         prev_pos = pos
@@ -317,26 +255,20 @@ def solve(d, new_pos_func = new_pos_2D):
             pos = new_pos
             assert(v == '.')
             movement_map[pos] = facing
-            if enable_renderer:
-                renderer.draw_at_pos(pos, facing)
-                renderer.handle_input()
         
             prev_pos = pos
             prev_facing = facing
 
 
     movement_map[pos] = 'E'
-    if enable_renderer:
-        renderer.draw_at_pos(pos, 'E')
     
-    if True:
+    if False:
         for y in range(1,H+1):
             print(f'{y:3} ',end='')
             for x in range(1,W+1):
                 print(movement_map.get((y,x),' '), end='')
             print()
 
-    print(pos, facing)
     return 1000*pos[0] + 4*pos[1] + '>v<^'.index(facing)
             
 
@@ -349,20 +281,18 @@ def test_part1():
     print('PART 1:', result)
     assert(result == 65368)
 
-def solve2(d):
-    return solve(d, new_pos_func=new_pos_3D)
-
 def test_example2():
-    result = solve2(EXAMPLE_DATA)
+    result = solve(EXAMPLE_DATA, new_pos_func=new_pos_3D)
     assert(5031 == result)
 
 def tets_part2():
-    result = solve2(data())
+    result = solve(data(), new_pos_func=new_pos_3D_part2)
     print('PART 2:', result)
+    assert(result == 156166)
 
 
 if __name__ == "__main__":
-    #test_example()
-    #test_part1()
-    #test_example2()
+    test_example()
+    test_part1()
+    test_example2()
     tets_part2()
