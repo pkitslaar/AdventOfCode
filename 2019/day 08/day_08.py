@@ -1,5 +1,6 @@
 import numpy as np
 from itertools import dropwhile
+from pathlib import Path
 
 BLACK = 0
 WHITE = 1
