@@ -2,17 +2,9 @@
 Advent of Code 2023 - Day 02
 Pieter Kitslaar
 """
-from pathlib import Path
-
-THIS_DIR = Path(__file__).parent
 
 from collections import defaultdict, Counter
 from functools import reduce
-
-
-def data():
-    with open(THIS_DIR / "input.txt") as f:
-        return f.read()
 
 
 EXAMPLE_DATA = """\
@@ -83,3 +75,13 @@ def test_part2():
     result = solve(data(), part2=True)
     print("Part 2:", result)
     assert result == 62241
+
+
+from pathlib import Path
+
+THIS_DIR = Path(__file__).parent
+
+
+def data():
+    with open(THIS_DIR / "input.txt") as f:
+        return f.read()

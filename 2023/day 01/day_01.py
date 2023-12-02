@@ -3,15 +3,7 @@ Advent of Code 2023 - Day 01
 Pieter Kitslaar
 """
 
-from pathlib import Path
-
-THIS_DIR = Path(__file__).parent
-
-
-def data():
-    with open(THIS_DIR / "input.txt") as f:
-        return f.read()
-
+import re
 
 EXAMPLE_DATA = """\
 1abc2
@@ -19,8 +11,6 @@ pqr3stu8vwx
 a1b2c3d4e5f
 treb7uchet
 """
-
-import re
 
 # find only digits
 DIGIT_RE = re.compile("\d")
@@ -95,3 +85,13 @@ def test_part2():
     result = solve(data(), part2=True)
     print("Part 2:", result)
     assert result == 53539
+
+
+from pathlib import Path
+
+THIS_DIR = Path(__file__).parent
+
+
+def data():
+    with open(THIS_DIR / "input.txt") as f:
+        return f.read()
