@@ -1,0 +1,16 @@
+[package]
+name = "aoc_2023"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+indoc = "1.0.3"
+regex = "1.10.2"
+
+[[bin]]
+name = "day_01"
+path = "day 01/day_01.rs"
+
+[[bin]]
+name = "day_02"
+path = "day 02/day_02.rs"
