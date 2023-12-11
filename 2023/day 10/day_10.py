@@ -19,75 +19,36 @@ def parse(data):
     return grid, start_pos
 
 
+# allowed connections between pipes
+PIPE_CONECTIONS = {
+    # pipe: {offset: allowed_connections}
+    "7": {(-1, 0): "-LF", (0, 1): "|JL"},  # left  # below
+    "F": {(1, 0): "-7J", (0, 1): "|JL"},  # right  # below
+    "L": {(1, 0): "-J7", (0, -1): "|F7"},  # right  # above
+    "J": {(-1, 0): "-FL", (0, -1): "|F7"},  # left  # above
+    "-": {(-1, 0): "-FL", (1, 0): "-J7"},  # left  # right
+    "|": {(0, -1): "|F7", (0, 1): "|JL"},  # above  # below
+}
+
+
 def to_graph(grid, start_pos):
     G = nx.Graph()
     for pos, c in grid.items():
         match c:
             case "S":
                 G.add_node(pos, label="S")
-            case "7":
-                G.add_node(pos, label="7")
-                # left neighbour
-                n1 = (pos[0] - 1, pos[1])
-                if grid.get(n1, ".") not in ".J7|":
-                    G.add_edge(n1, pos)
-                # bottom neighbour
-                n2 = (pos[0], pos[1] + 1)
-                if grid.get(n2, ".") not in ".F7-":
-                    G.add_edge(n2, pos)
-            case "F":
-                G.add_node(pos, label="F")
-                # right neighbour
-                n1 = (pos[0] + 1, pos[1])
-                if grid.get(n1, ".") not in ".FL|":
-                    G.add_edge(n1, pos)
-                # bottom neighbour
-                n2 = (pos[0], pos[1] + 1)
-                if grid.get(n2, ".") not in ".F7-":
-                    G.add_edge(n2, pos)
-            case "L":
-                G.add_node(pos, label="L")
-                # top neighbour
-                n1 = (pos[0], pos[1] - 1)
-                if grid.get(n1, ".") not in ".LJ-":
-                    G.add_edge(n1, pos)
-                # right neighbour
-                n2 = (pos[0] + 1, pos[1])
-                if grid.get(n2, ".") not in ".FL|":
-                    G.add_edge(n2, pos)
-            case "J":
-                G.add_node(pos, label="J")
-                # top neighbour
-                n1 = (pos[0], pos[1] - 1)
-                if grid.get(n1, ".") not in ".LJ-":
-                    G.add_edge(n1, pos)
-                # left neighbour
-                n2 = (pos[0] - 1, pos[1])
-                if grid.get(n2, ".") not in ".J7|":
-                    G.add_edge(n2, pos)
-            case "-":
-                G.add_node(pos, label="-")
-                # left neighbour
-                n1 = (pos[0] - 1, pos[1])
-                if grid.get(n1, ".") not in ".J7|":
-                    G.add_edge(n1, pos)
-                # right neighbour
-                n2 = (pos[0] + 1, pos[1])
-                if grid.get(n2, ".") not in ".FL|":
-                    G.add_edge(n2, pos)
-            case "|":
-                G.add_node(pos, label="|")
-                # top neighbour
-                n1 = (pos[0], pos[1] - 1)
-                if grid.get(n1, ".") not in ".LJ-":
-                    G.add_edge(n1, pos)
-                # bottom neighbour
-                n2 = (pos[0], pos[1] + 1)
-                if grid.get(n2, ".") not in ".F7-":
-                    G.add_edge(n2, pos)
+            case pipe if pipe in PIPE_CONECTIONS:
+                G.add_node(pos, label=pipe)
+                for offset, connections in PIPE_CONECTIONS[pipe].items():
+                    neighbour = (pos[0] + offset[0], pos[1] + offset[1])
+                    if (
+                        grid.get(neighbour, ".") in connections
+                        or neighbour == start_pos
+                    ):
+                        G.add_edge(pos, neighbour)
             case _:
                 raise Exception(f"Unknown character {c}")
-    return G.to_undirected(), start_pos
+    return G, start_pos
 
 
 from heapq import heappush, heappop, heapify
@@ -117,7 +78,7 @@ def find_cycle(G, start_pos):
         for neighbour in neighbours:
             if neighbour not in visited:
                 heappush(to_visit, (distance + 1, neighbour, (current, neighbour)))
-    # find signed area to see if loop is clockwise
+    # find signed area
     area = 0
     for (u, v) in loop_edges:
         area += (v[0] - u[0]) * (v[1] + u[1])
@@ -131,20 +92,6 @@ def solve(data, part2=False):
     grid, start_pos = parse(data)
     graph, start_pos = to_graph(grid, start_pos)
     loop_edges = find_cycle(graph, start_pos)
-    # loop_edges_nx = nx.find_cycle(graph, start_pos)
-    # assert loop_edges == loop_edges_nx
-    loop_nodes = []
-    for edge in loop_edges:
-        loop_nodes.extend(edge)
-    min_x = min([pos[0] for pos in loop_nodes])
-    max_x = max([pos[0] for pos in loop_nodes])
-    min_y = min([pos[1] for pos in loop_nodes])
-    max_y = max([pos[1] for pos in loop_nodes])
-    loop_grid = [["."] * (max_x - min_x + 1) for _ in range(max_y - min_y + 1)]
-    for edge in loop_edges:
-        u, _ = edge
-        loop_grid[u[1] - min_y][u[0] - min_x] = graph.nodes[u]["label"]
-    print("\n".join("".join(row) for row in loop_grid))
 
     distances = {}
     distances[start_pos] = 0
@@ -216,19 +163,19 @@ def solve2(data):
         loop_positions.add(v)
         direction = (v[0] - u[0], v[1] - u[1])
         if direction == (0, 1):
-            # downqards add candidate to left
+            # downqards add candidates to left
             inside_candidates.add((u[0] - 1, u[1]))
             inside_candidates.add((v[0] - 1, v[1]))
         elif direction == (0, -1):
-            # upwards add candidate to right
+            # upwards add candidates to right
             inside_candidates.add((u[0] + 1, u[1]))
             inside_candidates.add((v[0] + 1, v[1]))
         elif direction == (1, 0):
-            # right add candidate to bottom
+            # right add candidates to bottom
             inside_candidates.add((u[0], u[1] + 1))
             inside_candidates.add((v[0], v[1] + 1))
         elif direction == (-1, 0):
-            # left add candidate to top
+            # left add candidates to top
             inside_candidates.add((u[0], u[1] - 1))
             inside_candidates.add((v[0], v[1] - 1))
         else:
@@ -248,8 +195,8 @@ def solve2(data):
         visited.add(current)
         for offset in OFFSETS:
             neighbour = (current[0] + offset[0], current[1] + offset[1])
-            # if neighbour not in visited and neighbour not in loop_positions:
-            heappush(to_visit, (distance + 1, neighbour))
+            if neighbour not in visited and neighbour not in loop_positions:
+                heappush(to_visit, (distance + 1, neighbour))
     return len(visited)
 
 
