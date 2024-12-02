@@ -53,7 +53,7 @@ def test_example2():
 def test_part2():
     result = solve(data(), part2=True)
     print("Part 2:", result)
-    assert result == -1
+    assert result == 22014209
 
 
 from pathlib import Path
