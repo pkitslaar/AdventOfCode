@@ -33,11 +33,14 @@ def parse(data):
 DIRECIONS = {'^': (0, -1), 'v': (0, 1), '<': (-1, 0), '>': (1, 0)}
 TURN_RIGHT = {'^': '>', '>': 'v', 'v': '<', '<': '^'}
 
-def trace(grid, guard):
-    visited = set()
+def trace(grid, guard, visit_order=None):
+    visit_order = [] if visit_order is None else visit_order
+    visited = set(visit_order) 
+    
     loop_detected = False
     while guard.pos in grid:
             visited.add(guard)
+            visit_order.append(guard)
             x, y = guard.pos
             dx, dy = DIRECIONS[guard.direction]
             next_pos = (x+dx, y+dy)
@@ -50,36 +53,35 @@ def trace(grid, guard):
             if guard in visited:
                 loop_detected = True
                 break
-    return visited, loop_detected
+    return visit_order, loop_detected
 
 def solve(data, part2=False):
     grid, guard_start = parse(data)
-    visited, _ = trace(grid, guard_start)
+    visit_order, _ = trace(grid, guard_start)
     if not part2:
-        return len({g.pos for g in visited})
+        return len({g.pos for g in visit_order})
     
     # part 2
     # try to place obstacles anwhere on the path of the guard
     # avoid the start position of the guard
-    loop_obstacle_positions = set()
-    for g in visited:
-        if g.pos == guard_start.pos:
+    tested_positions = {guard_start.pos: False}
+    for i, g in enumerate(visit_order):
+        if g.pos in tested_positions:
+            # skip positions that have already been tested
             continue
-        if g.pos in loop_obstacle_positions:
-            # skip positions that are already part of a "previous" loop
-            continue
-
+        
         # temporarily place obstacle and check if a loop is detected
-        # this is a bit brute force, but it works
-        # better might be to do some backtracking so the inital
-        # trace does not need to be repeated
-        grid[g.pos] = '#' # place obstacle
-        _, loop_detected = trace(grid, guard_start)
+        # we start the trace from the previous known trace position
+        # for performance improvements
+        #         
+        grid[g.pos] = '#' # place obstacle        
+        prev_index = i-1        
+        _, loop_detected = trace(grid, visit_order[prev_index], visit_order=visit_order[:prev_index])
         grid[g.pos] = '.' # remove obstacle
 
-        if loop_detected:
-            loop_obstacle_positions.add(g.pos)
-    return len(loop_obstacle_positions)
+        tested_positions[g.pos] = loop_detected
+
+    return sum(1 for v in tested_positions.values() if v)
 
 
 def test_example():
