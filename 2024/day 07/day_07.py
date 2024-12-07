@@ -20,23 +20,42 @@ OPERANDS2 = {'+': int.__add__, '*': int.__mul__, '||': lambda a,b: int(f'{a}{b}'
 
 from itertools import product
 
+def eq_valid(test_value, arguments, ops):
+    v = arguments[0]
+    for op, arg in zip(ops, arguments[1:]):
+        if v > test_value:
+            return False
+        v = op(v, arg)
+    return v == test_value
+
+def find_match(eq, operands):
+    test_value, arguments = eq
+    num_op_positions = len(arguments) - 1
+    for ops in product(operands.values(), repeat=num_op_positions):
+        if eq_valid(test_value, arguments, ops):
+            return True
+    return False
+
+def find_matches(eqs, operands):
+    matches = {eq:find_match(eq, operands) for eq in eqs}
+    return matches
 
 def solve(data, part2=False):
-    OPS = OPERANDS2 if part2 else OPERANDS
-    matches = []
+    eqs = []
     for line in data.splitlines():
         test_str, arguments_str = line.split(':')
         test_value = int(test_str)
-        arguments = [int(a) for a in arguments_str.split()]
-
-        num_op_positions = len(arguments) - 1
-        for ops in product(OPS, repeat=num_op_positions):
-            v = arguments[0]
-            for op, arg in zip(ops, arguments[1:]):
-                v = OPS[op](v, arg)
-            if v == test_value:
-                matches.append((test_value, arguments, ops))
-    return sum(set(test_value for test_value, _, _ in matches))
+        arguments = tuple([int(a) for a in arguments_str.split()])
+        eqs.append((test_value, arguments))
+    
+    # part 1
+    matches = find_matches(eqs, OPERANDS)
+    result = sum(set(eq[0] for eq, m in matches.items() if m ))
+    if part2:
+        # part 2 see if other equations match using the new || operator
+        matches2 = find_matches([eqs for eqs, m in matches.items() if not m], OPERANDS2)
+        result += sum(set(eq[0] for eq, m in matches2.items() if m ))
+    return result
 
 
 def test_example():
