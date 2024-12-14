@@ -62,26 +62,48 @@ def find_solution(machine, cost_a = 3, cost_b = 1, N=100):
     return -1 # no solution
 
 
-def find_optimized(machine, cost_a = 3, cost_b = 1, N=100):
+def find_optimized(machine, cost_a = 3, cost_b = 1, maxN=100):
     prize = machine["Prize"]
     a_delta = machine["Button A"]
     b_delta = machine["Button B"]
+
+    # Thanks to Github Co-Pilot for writing out the math for me
+
+    # we need to solve the following equations:
+    # a * a_delta[0] + b * b_delta[0] = prize[0]
+    # a * a_delta[1] + b * b_delta[1] = prize[1]
     
-    # check X and Y separately
-    n_a_x, r_a_x = divmod(prize[0], a_delta[0])
-    n_b_x, r_b_x = divmod(prize[0], b_delta[0])
-    return -1
+    # we can solve this by multiplying the first equation by b_delta[1] and the second by b_delta[0]
+    # a * a_delta[0] * b_delta[1] + b * b_delta[0] * b_delta[1] = prize[0] * b_delta[1]
+    # a * a_delta[1] * b_delta[0] + b * b_delta[0] * b_delta[1] = prize[1] * b_delta[0]
 
+    # subtract the two equations to get a:
+    a = (prize[0] * b_delta[1] - prize[1] * b_delta[0]) / (a_delta[0] * b_delta[1] - a_delta[1] * b_delta[0])
+    b = (prize[1] - a * a_delta[1]) / b_delta[1]
 
+    if a - int(a) != 0 or b - int(b) != 0:
+        # we want exact solutions for integer number of pushes
+        return -1
+    if a < 0 or b < 0:
+        # we want positive number of pushes
+        return -1
+    if maxN > 0 and (a > maxN or b > maxN):
+        # if a limit is defined (e.g. Part 1) we want to stay within that limit
+        return -1
+    
+    # return the cost of the solution
+    return int(a) * cost_a + int(b) * cost_b
 
 def solve(data, part2=False):
     machines = parse(data)
     result = 0
+    N = 100 if not part2 else -1
     for m in machines:
         if part2:
-            min_cost = find_optimized(m)
-        else:
-            min_cost = find_solution(m)
+            # increase the prize for part 2
+            INC = 10000000000000
+            m['Prize'] = (m["Prize"][0] + INC, m["Prize"][1] + INC)
+        min_cost = find_optimized(m, maxN=N)         
         if min_cost > -1:
             result += min_cost
     return result
@@ -99,16 +121,10 @@ def test_part1():
     assert result == 29438
 
 
-def test_example2():
-    result = solve(EXAMPLE_DATA, part2=True)
-    print(f"example 2: {result}")
-    assert result == -1
-
-
 def test_part2():
     result = solve(data(), part2=True)
     print("Part 2:", result)
-    assert result == -1
+    assert result == 104958599303720
 
 
 from pathlib import Path
