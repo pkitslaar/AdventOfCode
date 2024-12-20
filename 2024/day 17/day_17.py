@@ -173,6 +173,67 @@ def test_part1():
     assert result != '1,1,4,4,3,3,7,7,0' # issue with literal and combo operands
     assert result == '2,3,6,2,1,6,1,2,1'
 
+def solve2(data):
+    """
+    Specific for the puzzel input.txt
+
+    The last output digit is only dependent on the first 3 bits e.g first octal number of A.
+    The second to last digit is dependent on the first 6 bits e.g. the first two octal numbers of A.
+
+    By solving each 3 bits (e.g. octal number) at a time we can find the input.
+    Some solutions are not unique so we need to backtrack if we find a dead end.
+
+    *note* 
+    I figured out the 3 bit dependecy myself by looking at the program code.
+    I initially thought there could be some kind of lookup table for the 3 bit values and the corresponding outputs.
+    However the dependencies on earlier bits made this not feasible.
+    I had to look at Reddit to get a hint about searching with backtracking, which worked right away.
+    """
+    _, program = parse(data)
+
+    # run the program with a given A	
+    def run_program(A):
+        cpu = CPU(A, 0, 0)
+        cpu.run(program)
+        return cpu.output
+
+
+    # the octal parts of the A number
+    # for N output numbers we need N octal parts
+    A_parts = ['0']*len(program)
+
+    # search for the value of the i-th octal part
+    # starting from the j-th value which can be used to resume 
+    # the search if we backtrack
+    def search_level(i, start_j = 0):
+        for j in range(start_j, 8):
+            A_parts[i] = str(j)
+            A = int(''.join(A_parts),8)
+            result = run_program(A)
+            if result[-i-1:] == program[-i-1:]:
+                return j
+        return -1
+    
+    levels = [(-1, False)]*len(program)
+    while any(l[1] == False for l in levels):
+        # find first level to search
+        level, (l_prev, _) = [(i,l) for i,l in enumerate(levels) if l[1]==False][0] 
+        j = search_level(level, l_prev+1)
+        if j == -1:
+            print('Backtracking')
+            # no solution found
+            levels[level] = (-1, False)
+            A_parts[level] = '0'
+            levels[level-1] = (levels[level-1][0]+1, False)
+            A_parts[level-1] = '0'
+        else:
+            print(A_parts[:level+1])
+            levels[level] = (j, True)
+
+    result = A = int(''.join(A_parts),8)
+    assert run_program(A) == program
+    return result
+
 EXAMPLE_DATA2 = """\
 Register A: 117440
 Register B: 0
@@ -183,56 +244,14 @@ Program: 0,3,5,4,3,0
 
 def test_example2():
     # quick test to see if the program produces a copy
-    register, program = parse(EXAMPLE_DATA2)
-    result = solve(EXAMPLE_DATA2, part2=False)
+    _, program = parse(EXAMPLE_DATA2)
+    result = solve(EXAMPLE_DATA2)
     assert result == ",".join(map(str, program))
 
-
 def test_part2():
-    """
-    Program: 2,4, 1,6, 7,5, 4,6, 1,4, 5,5, 0,3, 3,0
-
-    2,4 -> B = A % 8
-    1,6 -> B = B ^ 6
-    7,5 -> C = A // 2**B
-    4,6 -> B = B ^ C
-    1,4 -> B = B ^ 4
-    5,5 -> output B % 8
-    0,3 -> A = A // 2**3
-    3,0 -> jump to 0 if A != 0
-
-    The program does the follwoing
-     - take the last 3 bits of A as B
-     - xor B with 6
-     - take the next set of 3 bits from A starting from B-th as C
-
-    """
-    _, program = parse(data())
-
-
-    A_parts = ['0']*16
-    for i in range(16):
-        for j in range(8):
-            A_parts[i] = str(j)
-            A = int(''.join(A_parts),8)
-            cpu = CPU(A, 0, 0)
-            cpu.run(program)
-            result = cpu.output
-            if result[:i] == program[:i]:
-                break
-        
-
-    
-
-    cpu = CPU(int('7'*3,8), 0, 0)
-    cpu.run(program)
-    result = cpu.output
-
-
-        
-
+    result = solve2(data())
     print("Part 2:", result)
-    assert result == -1
+    assert result == 90938893795561
 
 
 from pathlib import Path
