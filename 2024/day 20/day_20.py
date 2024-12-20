@@ -35,38 +35,32 @@ def parse(data):
             grid[(x, y)] = c
     return grid, S, E
 
-def all_cheat_pairs(grid):
-    pairs = {}
+def all_cheat_pairs(grid, T=2):
     for (x, y), c in grid.items():
         if c == '.':
-            for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
-                end_p = (x+2*dx, y+2*dy)
-                if end_p in grid and grid[end_p] == '.':
-                    mid_p = (x+dx, y+dy)
-                    if grid[mid_p] == '#':
-                        # no need to cheat if the mid point is not a wall
-                        pairs[((x, y), mid_p)] = end_p
-    return pairs
+            for dx in range(-T, T+1):
+                for dy in range(-T, T+1):
+                    t = abs(dx) + abs(dy)
+                    if t > T or t <= 0:
+                        continue    
+                    end_p = (x+dx, y+dy)
+                    if end_p in grid and grid[end_p] == '.':                        
+                        yield (x, y), end_p, t
+                        
 
 from heapq import heappop, heappush
 
-def fastest_path(grid, S, E, cheat_pair=None):
+def fastest_path(grid, S, E):
     queue = [(0, S)]
-    visited = set()
+    visited = {}
     while queue:
         cost, pos = heappop(queue)
+        visited[pos] = cost
         if pos == E:
-            return cost
-        if pos in visited:
-            continue
-        visited.add(pos)
+            return visited
         for dx, dy in [(0, 1), (1, 0),(0, -1), (-1, 0)]:
             new_pos = (pos[0]+dx, pos[1]+dy)
             new_cost = cost + 1
-            is_cheat = (pos, new_pos) == cheat_pair
-            if is_cheat:
-                new_pos = (new_pos[0]+dx, new_pos[1]+dy)
-                new_cost = cost + 2
             if new_pos in grid and grid[new_pos] != '#' and new_pos not in visited:
                 heappush(queue, (new_cost, new_pos))
     return None
@@ -88,26 +82,25 @@ def print_grid(grid, cheat_pair = None):
         print(''.join(g_copy.get((x, y), '#') for x in range(max_x+1)))
 
 DEBUG = False
-from tqdm import tqdm
 
 def solve(data, min_saving, part2=False):
     grid, S, E = parse(data)
-    base_time = fastest_path(grid, S, E)
-    cheat_pair_time = {}
-    cheat_pairs = all_cheat_pairs(grid)
-    for cheat_pair in tqdm(cheat_pairs):
-        if DEBUG:
-            print_grid(grid, cheat_pair)
+    arrival_times = fastest_path(grid, S, E)
 
-        result = fastest_path(grid, S, E, cheat_pair=cheat_pair)
-        if DEBUG:
-            print(result, base_time - result)
-        if result is not None:
-            cheat_pair_time[cheat_pair] = result
+    cheat_pair_saving = {}
+    for cp_start, cp_end, cp_t in all_cheat_pairs(grid, T= 2 if not part2 else 20):
+        #if DEBUG:
+        #    print_grid(grid, cheat_pair)
+        normal_start_time = arrival_times[cp_start]
+        normal_end_time = arrival_times[cp_end]
+        normal_duration = normal_end_time - normal_start_time
+        
+        cheat_saving = normal_duration - cp_t 
+        cheat_pair_saving[(cp_start, cp_end)] = cheat_saving
     
     time_savings = Counter()
-    for _, time in cheat_pair_time.items():
-        time_savings[base_time - time] += 1
+    for _, saving in cheat_pair_saving.items():
+        time_savings[saving] += 1
     result = sum(n for t, n in time_savings.items() if t >= min_saving)
     return result
 
@@ -121,19 +114,19 @@ def test_example():
 def test_part1():
     result = solve(data(), min_saving=100)
     print("Part 1:", result)
-    assert result == -1
+    assert result == 1296
 
 
 def test_example2():
-    result = solve(EXAMPLE_DATA, part2=True)
+    result = solve(EXAMPLE_DATA, part2=True, min_saving=76)
     print(f"example 2: {result}")
-    assert result == -1
+    assert result == 3
 
 
 def test_part2():
-    result = solve(data(), part2=True)
+    result = solve(data(), part2=True, min_saving=100)
     print("Part 2:", result)
-    assert result == -1
+    assert result == 977665
 
 
 from pathlib import Path
