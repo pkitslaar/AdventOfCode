@@ -102,8 +102,6 @@ RobotState = namedtuple('RobotState', 'cost pad_grid current_pad pad_history')
 
 DIRECTIONS = {'<': (-1, 0), '>': (1, 0), '^': (0, -1), 'v': (0, 1)}
 
-from functools import lru_cache
-
 def move_to_and_press(robot_chain, key):
         queue = [robot_chain]
         visited = set()
@@ -177,7 +175,6 @@ def solve(data, part2=False):
         robot_chain = tuple([RobotState(0, DOOR_PAD_GRID, 'A', '')] + 
                             [RobotState(0, CONTROL_PAD_GRID, 'A', '') for _ in range(NUM_ROBOTS)])
         
-
         for c in code:
             robot_chain = move_to_and_press(robot_chain, c)
  
@@ -187,23 +184,106 @@ def solve(data, part2=False):
 
     return result
 
+def find_path(pad_grid, _from, _to, move_path_func):
+    queue = [(
+        0,      # cost 
+        _from,  # current pad
+        ['A'],     # previous directions
+    )
+    ]
+    visited = {}
+    while queue:
+        current_cost, current_pad, prev_dirs = heappop(queue)
+        if not current_pad in visited or visited[current_pad][0] > current_cost:
+            visited[current_pad] = (current_cost, prev_dirs)
+        
+        if current_pad == _to:
+            continue
+        
+        current_pos = pad_grid.pad_to_pos[current_pad]
+        for c, (dx, dy) in DIRECTIONS.items():
+            new_x, new_y = current_pos[0] + dx, current_pos[1] + dy
+            new_pos = (new_x, new_y)
+            if new_pos in pad_grid.pos_to_pad:
+                new_dirs = prev_dirs + [c]
+                new_cost = current_cost +  move_path_func(new_dirs)
+                new_pad = pad_grid.pos_to_pad[new_pos]
+                if not new_pad in visited or visited[new_pad][0] > new_cost:
+                    heappush(queue, (new_cost, new_pad, new_dirs))
+    return visited[_to]
+
+def solve_fast(data, part2=False):
+    result = 0
+    NUM_ROBOTS = 2 if not part2 else 25
+
+    # we can make lookup tables for the best moves for each robot
+    # the first lookup is for the robot we are controlling
+    robot_lookups = []
+    robots = [CONTROL_PAD_GRID for _ in range(NUM_ROBOTS)] + [DOOR_PAD_GRID]
+    for i, robot_grid in enumerate(robots):
+        this_lookup = {}
+        if i == 0:
+            for _from in robot_grid.pad_to_pos:
+                for _to in robot_grid.pad_to_pos:
+                    if _from == _to:
+                        continue
+                    # find the shortest path from _from to _to
+                    path_len, prev_dirs = find_path(robot_grid, _from, _to, lambda c_dirs: 1)
+                    this_lookup[(_from, _to)] =  (path_len, prev_dirs[-1])
+        else:
+            for _from in robot_grid.pad_to_pos:
+                for _to in robot_grid.pad_to_pos:
+                    if _from == _to:
+                        continue
+                    # find the shortest path from _from to _to
+                    def move_path_func(c_dirs):
+                        c_from = c_dirs[-2]
+                        c_to = c_dirs[-1]
+                        if c_from == c_to:
+                            return 1
+                        return robot_lookups[i-1][(c_from, c_to)][0] + 1
+                    move_path_len, prev_dirs = find_path(robot_grid, _from, _to, move_path_func)
+                    if prev_dirs[-1] != 'A':
+                        push_path_len, _ = robot_lookups[i-1][(prev_dirs[-1], 'A')]
+                    this_lookup[(_from, _to)] =  (move_path_len + push_path_len, prev_dirs[-1])
+        robot_lookups.append(this_lookup)
+
+    for code in data.strip().splitlines():
+        code = code.strip()
+
+        full_path_len = 0
+
+        prev_c = 'A'
+        for c in code:
+            move_path_len = robot_lookups[-1][(prev_c, c)][0] + 1
+            full_path_len += move_path_len
+            prev_c = c
+        
+        num_pushed = full_path_len
+        code_value = int(''.join(c for c in code if c.isnumeric()))
+        result += code_value * num_pushed
+
+    return result
+
 
 def test_example():
-    result = solve(EXAMPLE_DATA)
+    result = solve_fast(EXAMPLE_DATA)
     print(f"example: {result}")
     assert result == 126384
 
 
 def test_part1():
-    result = solve(data())
+    result = solve_fast(data())
     print("Part 1:", result)
     assert result < 128918
     assert result == 125742
 
 def test_part2():
-    result = solve(data(), part2=True)
+    result = solve_fast(data(), part2=True)
     print("Part 2:", result)
-    assert result == -1
+    assert result < 189678562616954
+    assert result > 75714616077620
+    
 
 
 from pathlib import Path
