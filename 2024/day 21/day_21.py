@@ -43,9 +43,6 @@ CONTROL_PAD_GRID = PadGrid(CONTROL_PAD)
 
 from heapq import heappop, heappush
 
-from collections import namedtuple
-from dataclasses import dataclass
-
 
 """
 +---+---+---+
@@ -98,193 +95,116 @@ from dataclasses import dataclass
 
 """
 
-RobotState = namedtuple('RobotState', 'cost pad_grid current_pad pad_history')
-
 DIRECTIONS = {'<': (-1, 0), '>': (1, 0), '^': (0, -1), 'v': (0, 1)}
 
-def move_to_and_press(robot_chain, key):
-        queue = [robot_chain]
-        visited = set()
-        while queue:
-            current_chain = heappop(queue)
-            visited.add(current_chain)
+# New approach is needed for part2
+# This is inspired by looking at some Reddit solutions
+# Key point is to keep track of all possible paths and not use the
+# "best" path for each robot arm. As this changes depending on the number of robots
 
-            current = current_chain[0]
-            c_pad_grid: PadGrid = current.pad_grid
-            c_pad = current.current_pad
-
-            if current.current_pad == key:
-                # we are at the key pad we want to press
-                if len(current_chain) == 1:
-                    # no other robot arms to move
-                    # record the press of the key
-                    chain_0 = current._replace(
-                        cost = current.cost + 1,
-                        pad_history = current.pad_history + key
-                    )
-                    return tuple([chain_0])
-                else:
-                    # we need to move the other robot arms
-                    # to the 'A' pad and press it
-                    new_end_chain = move_to_and_press(tuple(current_chain[1:]), 'A')
-                    new_cost = current.cost + (new_end_chain[0].cost - current_chain[1].cost)
-                    new_robot_chain_0 = current._replace(
-                        cost = new_cost,
-                        pad_history = current.pad_history + 'A'
-                    )
-                    return tuple([new_robot_chain_0, *new_end_chain])
-
-            if len(current_chain) == 1:
-                # no other robot arms to move
-                # can "move" to the key pad instantly
-                chain_0 = current._replace(
-                    current_pad = key,
-                )
-                heappush(queue, tuple([chain_0]))
-            else:
-
-                for c, (dx, dy) in DIRECTIONS.items():
-                    current_x, current_y = c_pad_grid.pad_to_pos[c_pad]
-                    new_x, new_y = current_x + dx, current_y + dy
-                    new_pos = (new_x, new_y)
-                    if new_pos in c_pad_grid.pos_to_pad:
-                        new_pad = c_pad_grid.pos_to_pad[new_pos]
-                        # to move to this new pad we need to move the other robot arms
-                        # by pressing the direction key 'c'
-                        new_end_chain = move_to_and_press(tuple(current_chain[1:]), c)
-                        new_cost = current.cost + (new_end_chain[0].cost - current_chain[1].cost)
-                        new_robot_chain_0 = current._replace(
-                            cost = new_cost,
-                            current_pad = new_pad,
-                            pad_history = current.pad_history + c
-                        )
-                        new_chain = tuple([new_robot_chain_0, *new_end_chain])
-                        if new_chain not in visited:
-                            heappush(queue, new_chain)
-
-           
-
-
-def solve(data, part2=False):
-    result = 0
-    NUM_ROBOTS = 3 if not part2 else 4
-
-    for code in data.strip().splitlines():
-        code = code.strip()
-
-        robot_chain = tuple([RobotState(0, DOOR_PAD_GRID, 'A', '')] + 
-                            [RobotState(0, CONTROL_PAD_GRID, 'A', '') for _ in range(NUM_ROBOTS)])
-        
-        for c in code:
-            robot_chain = move_to_and_press(robot_chain, c)
- 
-        num_pushed = len(robot_chain[-1].pad_history)
-        code_value = int(''.join(c for c in code if c.isnumeric()))
-        result += code_value * num_pushed
-
-    return result
-
-def find_path(pad_grid, _from, _to, move_path_func):
-    queue = [(
-        0,      # cost 
-        _from,  # current pad
-        ['A'],     # previous directions
-    )
-    ]
+def find_grid_paths(grid, from_, to_):
+    """
+    Find all possible shortest paths from_ to to_ on the grid
+    """
+    queue = [(0, from_, '')]
     visited = {}
     while queue:
-        current_cost, current_pad, prev_dirs = heappop(queue)
-        if not current_pad in visited or visited[current_pad][0] > current_cost:
-            visited[current_pad] = (current_cost, prev_dirs)
-        
-        if current_pad == _to:
+        current_cost, current_pad, steps = heappop(queue)
+        if not current_pad in visited or visited[current_pad] >= current_cost:
+            visited[current_pad] = current_cost
+        else:
             continue
         
-        current_pos = pad_grid.pad_to_pos[current_pad]
+        if current_pad == to_:
+            yield steps
+            continue
+
+        current_pos = grid.pad_to_pos[current_pad]
         for c, (dx, dy) in DIRECTIONS.items():
             new_x, new_y = current_pos[0] + dx, current_pos[1] + dy
             new_pos = (new_x, new_y)
-            if new_pos in pad_grid.pos_to_pad:
-                new_dirs = prev_dirs + [c]
-                new_cost = current_cost +  move_path_func(new_dirs)
-                new_pad = pad_grid.pos_to_pad[new_pos]
-                if not new_pad in visited or visited[new_pad][0] > new_cost:
-                    heappush(queue, (new_cost, new_pad, new_dirs))
-    return visited[_to]
+            if new_pos in grid.pos_to_pad:
+                new_pad = grid.pos_to_pad[new_pos]
+                new_cost = current_cost + 1
+                if not new_pad in visited or visited[new_pad] >= new_cost:
+                    heappush(queue, (new_cost, new_pad, steps + c))
 
-def solve_fast(data, part2=False):
-    result = 0
-    NUM_ROBOTS = 2 if not part2 else 25
+def create_grid_lookup(grid: PadGrid):
+    # lookup table to move a robot arm from one pad to another and press the key
+    lookup = {}
+    for _from in grid.pad_to_pos:
+        for _to in grid.pad_to_pos:
+            keys = []
+            if _from == _to:
+                keys.append('A')
+            else:
+                for path in find_grid_paths(grid, _from, _to):
+                    keys.append(path + 'A')
+            lookup[(_from, _to)] = keys
+    return lookup
 
-    # we can make lookup tables for the best moves for each robot
-    # the first lookup is for the robot we are controlling
-    robot_lookups = []
-    robots = [CONTROL_PAD_GRID for _ in range(NUM_ROBOTS)] + [DOOR_PAD_GRID]
-    for i, robot_grid in enumerate(robots):
-        this_lookup = {}
-        if i == 0:
-            for _from in robot_grid.pad_to_pos:
-                for _to in robot_grid.pad_to_pos:
-                    if _from == _to:
-                        continue
-                    # find the shortest path from _from to _to
-                    path_len, prev_dirs = find_path(robot_grid, _from, _to, lambda c_dirs: 1)
-                    this_lookup[(_from, _to)] =  (path_len, prev_dirs[-1])
+from functools import lru_cache
+
+def solve_fast2(data, part2=False):
+    # lookup tables for moving a robot arm from one pad to another and pressing the key
+    numpad_lookup = create_grid_lookup(DOOR_PAD_GRID)
+    direction_lookup = create_grid_lookup(CONTROL_PAD_GRID)
+
+    ROBOT_DEPTH = 2 if not part2 else 25
+
+    @lru_cache(maxsize=None)
+    def shortest_num_moves(moves, level):
+        """
+        Find the shortest number of moves for the robot arm at level to press all keys in moves.
+        At level 0 the robot arm controlled by a human and all keys can be directly pressed.
+        """
+        if level == 0:
+            return len(moves)
         else:
-            for _from in robot_grid.pad_to_pos:
-                for _to in robot_grid.pad_to_pos:
-                    if _from == _to:
-                        continue
-                    # find the shortest path from _from to _to
-                    def move_path_func(c_dirs):
-                        c_from = c_dirs[-2]
-                        c_to = c_dirs[-1]
-                        if c_from == c_to:
-                            return 1
-                        return robot_lookups[i-1][(c_from, c_to)][0] + 1
-                    move_path_len, prev_dirs = find_path(robot_grid, _from, _to, move_path_func)
-                    if prev_dirs[-1] != 'A':
-                        push_path_len, _ = robot_lookups[i-1][(prev_dirs[-1], 'A')]
-                    this_lookup[(_from, _to)] =  (move_path_len + push_path_len, prev_dirs[-1])
-        robot_lookups.append(this_lookup)
+            num = 0
+            
+            # we know the robot arms always start in position 'A'
+            # this is because at the end of each key press all arms have to be in position 'A'
+            prev_m = 'A'
+            for m in moves:
+                all_min_moves = []
+                for possible_path in direction_lookup[(prev_m, m)]:
+                    all_min_moves.append(shortest_num_moves(possible_path, level - 1))
+                prev_m = m
+                num += min(all_min_moves)
+            return num
 
+    result = 0
     for code in data.strip().splitlines():
         code = code.strip()
 
-        full_path_len = 0
-
+        num_moves = 0
         prev_c = 'A'
         for c in code:
-            move_path_len = robot_lookups[-1][(prev_c, c)][0] + 1
-            full_path_len += move_path_len
+            all_min_moves = []
+            for possible_path in numpad_lookup[(prev_c, c)]:
+                all_min_moves.append(shortest_num_moves(possible_path, ROBOT_DEPTH))
+            num_moves += min(all_min_moves)
             prev_c = c
-        
-        num_pushed = full_path_len
         code_value = int(''.join(c for c in code if c.isnumeric()))
-        result += code_value * num_pushed
-
+        result += code_value * num_moves
     return result
 
-
 def test_example():
-    result = solve_fast(EXAMPLE_DATA)
+    result = solve_fast2(EXAMPLE_DATA)
     print(f"example: {result}")
     assert result == 126384
 
-
 def test_part1():
-    result = solve_fast(data())
+    result = solve_fast2(data())
     print("Part 1:", result)
-    assert result < 128918
     assert result == 125742
-
-def test_part2():
-    result = solve_fast(data(), part2=True)
-    print("Part 2:", result)
-    assert result < 189678562616954
-    assert result > 75714616077620
     
 
+def test_part2():
+    result = solve_fast2(data(), part2=True)
+    print("Part 2:", result)
+    assert result == 157055032722640
 
 from pathlib import Path
 
