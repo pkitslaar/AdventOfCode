@@ -16,13 +16,15 @@ def solve(data, part2=False):
     for bank in data.strip().splitlines():
         batteries = [int(d) for d in bank]
         battery_indices = [*enumerate(batteries)]
-        battery_indices.sort(key=lambda x: x[1], reverse=True) # sort by battery joltage descending
+        battery_indices.sort(
+            key=lambda x: x[1], reverse=True
+        )  # sort by battery joltage descending
 
         N = 2 if not part2 else 12  # number of batteries to select
-        
+
         #
-        found = [(-1,0)] # dummy initial value to simplify logic
-        while len(found) -1 < N:
+        found = [(-1, 0)]  # dummy initial value to simplify logic
+        while len(found) - 1 < N:
             num_to_be_found = N - len(found)
             max_index_allowed = len(batteries) - num_to_be_found - 1
             for idx, battery in battery_indices:
@@ -31,9 +33,9 @@ def solve(data, part2=False):
                     found.append((idx, battery))
                     break
 
-        bank_joltage = int("".join(str(battery) for idx, battery in found))    
+        bank_joltage = int("".join(str(battery) for idx, battery in found))
         result += bank_joltage
-        
+
     return result
 
 

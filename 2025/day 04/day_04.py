@@ -16,17 +16,20 @@ EXAMPLE_DATA = """\
 @.@.@@@.@.
 """
 
+
 def to_map(data):
     grid = {}
     for y, line in enumerate(data.strip().splitlines()):
         for x, c in enumerate(line):
-            if c == '@':
+            if c == "@":
                 grid[(x, y)] = c
     return grid
 
+
 NEIGHBORS = [(0, -1), (1, 0), (0, 1), (-1, 0), (-1, -1), (1, -1), (1, 1), (-1, 1)]
-assert (len(set(NEIGHBORS)) == len(NEIGHBORS)), "Duplicate neighbor offsets"
-assert (len(set(NEIGHBORS)) == 8), "Missing neighbor offsets"
+assert len(set(NEIGHBORS)) == len(NEIGHBORS), "Duplicate neighbor offsets"
+assert len(set(NEIGHBORS)) == 8, "Missing neighbor offsets"
+
 
 def solve(data, part2=False):
     result = 0

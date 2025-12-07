@@ -30,7 +30,7 @@ def solve(data, part2=False):
         elif row.isdigit():
             value = int(row)
             ingredients.append(value)
-    
+
     if not part2:
         for i in ingredients:
             for start, end in ranges:
@@ -38,7 +38,7 @@ def solve(data, part2=False):
                     result += 1
                     break
         return result
-    
+
     # part 2
     ranges.sort()
     while True:
@@ -54,7 +54,7 @@ def solve(data, part2=False):
         if len(merged_ranges) == len(ranges):
             break
         ranges = merged_ranges
-    
+
     for r in merged_ranges:
         result += r[1] - r[0] + 1
 

@@ -9,6 +9,7 @@ EXAMPLE_DATA = """\
 824824821-824824827,2121212118-2121212124
 """
 
+
 def invalid_ids(start, end, min_pair_digits=2, max_pair_digits=2):
     invalid_ids = []
 
@@ -25,17 +26,32 @@ def invalid_ids(start, end, min_pair_digits=2, max_pair_digits=2):
                 continue
             start_str = f"{start:0{max_num_digits}d}"
             end_str = f"{end:0{max_num_digits}d}"
-            lowest_pair = min(int(str(start_str)[:max_digits_per_pair]), int(str(start_str)[max_digits_per_pair:])) if len(start_str) > max_digits_per_pair else int(str(start_str))
-            highest_pair = max(int(str(end_str)[max_digits_per_pair:]), int(str(end_str)[:max_digits_per_pair])) if len(end_str) > max_digits_per_pair else int(str(end_str))
+            lowest_pair = (
+                min(
+                    int(str(start_str)[:max_digits_per_pair]),
+                    int(str(start_str)[max_digits_per_pair:]),
+                )
+                if len(start_str) > max_digits_per_pair
+                else int(str(start_str))
+            )
+            highest_pair = (
+                max(
+                    int(str(end_str)[max_digits_per_pair:]),
+                    int(str(end_str)[:max_digits_per_pair]),
+                )
+                if len(end_str) > max_digits_per_pair
+                else int(str(end_str))
+            )
             if lowest_pair > highest_pair:
                 raise ValueError("Logic error in determining lowest and highest pair")
             for pair in range(lowest_pair, highest_pair + 1):
-                str_pair = f"{pair}"*N
+                str_pair = f"{pair}" * N
                 pair_value = int(str_pair)
                 if pair_value < start or pair_value > end:
                     continue
                 invalid_ids.append(pair_value)
     return invalid_ids
+
 
 def test_invalid_ids():
     assert invalid_ids(11, 22) == [11, 22]
@@ -49,7 +65,6 @@ def test_invalid_ids():
     assert invalid_ids(565653, 565659) == []
     assert invalid_ids(824824821, 824824827) == []
     assert invalid_ids(2121212118, 2121212124) == []
-
 
 
 def solve(data, part2=False):
@@ -97,11 +112,11 @@ def invalid_ids_2(start, end):
         if n == n_start and n == n_end:
             digit_groups.append((start_str, end_str))
         elif n == n_start:
-            digit_groups.append((start_str, "9"*n))
+            digit_groups.append((start_str, "9" * n))
         elif n == n_end:
-            digit_groups.append(("1"+"0"*(n-1), end_str))
+            digit_groups.append(("1" + "0" * (n - 1), end_str))
         else:
-            digit_groups.append(("1"+"0"*(n-1), "9"*n))
+            digit_groups.append(("1" + "0" * (n - 1), "9" * n))
 
     # for each digit group, find invalid ids
     for start_str, end_str in digit_groups:
@@ -119,19 +134,18 @@ def invalid_ids_2(start, end):
             n_start_groups, start_remainder = divmod(len(start_str), n_digits)
             if n_start_groups > 1 and start_remainder == 0:
                 for v in range(sorted_groups[0], sorted_groups[1] + 1):
-                    first_group_value = int(str(v)*(n_start_groups))
+                    first_group_value = int(str(v) * (n_start_groups))
                     if first_group_value >= start and first_group_value <= end:
                         invalid_ids.append(first_group_value)
-            
+
             n_end_groups, end_remainder = divmod(len(end_str), n_digits)
             if n_end_groups > 1 and end_remainder == 0:
                 for v in range(sorted_groups[0], sorted_groups[1] + 1):
-                    last_group_value = int(str(v)*(n_end_groups))
+                    last_group_value = int(str(v) * (n_end_groups))
                     if last_group_value >= start and last_group_value <= end:
                         invalid_ids.append(last_group_value)
-        
-    return [*sorted(set(invalid_ids))]
 
+    return [*sorted(set(invalid_ids))]
 
 
 def test_invalid_ids_2():
@@ -146,6 +160,7 @@ def test_invalid_ids_2():
     assert invalid_ids_2(565653, 565659) == [565656]
     assert invalid_ids_2(824824821, 824824827) == [824824824]
     assert invalid_ids_2(2121212118, 2121212124) == [2121212121]
+
 
 def test_example2():
     result = solve(EXAMPLE_DATA, part2=True)

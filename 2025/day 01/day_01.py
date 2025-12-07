@@ -16,13 +16,14 @@ R14
 L82
 """
 
+
 def num_zero_point(dial_pos, amount):
     if amount < 0:
         # turn left
         if dial_pos + amount > 0:
             return dial_pos + amount, 0
         else:
-            n_zero = abs((dial_pos + amount) // 100 )
+            n_zero = abs((dial_pos + amount) // 100)
             if dial_pos == 0:
                 n_zero -= 1
             new_dial_pos = (dial_pos + amount) % 100
@@ -37,7 +38,6 @@ def num_zero_point(dial_pos, amount):
             n_zero = (dial_pos + amount) // 100
             new_dial_pos = (dial_pos + amount) % 100
             return new_dial_pos, n_zero
-    
 
 
 def test_num_zero_point():
@@ -52,8 +52,6 @@ def test_num_zero_point():
     assert num_zero_point(0, 14) == (14, 0)
     assert num_zero_point(14, -82) == (32, 1)
     assert num_zero_point(50, 1000) == (50, 10)
-
-
 
 
 def solve(data, part2=False):
